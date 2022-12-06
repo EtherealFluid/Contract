@@ -1,31 +1,37 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-const hre = require("hardhat");
+require('dotenv').config();
 
-async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+const RPVSale = artifacts.require('RPVSale.sol')
+const RPT = artifacts.require('RPTToken.sol')
+const RPV = artifacts.require('RPVToken.sol')
+const votingFactory = artifacts.require('VotingFactory')
 
-  const lockedAmount = hre.ethers.utils.parseEther("1");
-
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-  await lock.deployed();
-
-  console.log(
-    `Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
-  );
+module.exports = async function (deployer, network, accounts) {
+  deployer.then(async () => {
+    /* if (network === 'hardhat') {
+    await deployer.deploy(RPVSale, '500000000000000000', accounts[8])
+    await deployer.deploy(RPT, accounts[9])
+    await deployer.deploy(RPV, RPVSale.address)
+    await deployer.deploy(
+      votingFactory,
+      accounts[9],
+      accounts[1],
+      RPVSale.address,
+      2,
+      5
+    ) */
+    const sale = await deployer.deploy(RPVSale, '500000000000000000', process.env.DEPLOYER_ACCOUNT)
+    await deployer.deploy(RPT, process.env.DEPLOYER_ACCOUNT)
+    await deployer.deploy(RPV, RPVSale.address)
+    const saleInstance = await RPVSale.deployed();
+    await saleInstance.setToken(RPV.address, { from: process.env.DEPLOYER_ACCOUNT })
+    await deployer.deploy(
+      votingFactory,
+      RPT.address,
+      process.env.RINKEBY_FACTORY_OWNER,
+      RPVSale.address,
+      '500000000000000000', // rate 2,
+      '200000000000000000', // rate 5
+    )
+    await sale.transferOwnership( process.env.RINKEBY_FACTORY_OWNER );
+  })
 }
-
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});

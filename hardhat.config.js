@@ -8,7 +8,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: `https://data-seed-prebsc-2-s1.binance.org:8545/`,
+        url: `https://bsc-dataseed2.ninicoin.io/`,
       },
       initialBaseFeePerGas: 0,
       gasPrice: 1,
