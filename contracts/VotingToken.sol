@@ -5,6 +5,8 @@ import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol';
 
+/// @title Contract of VotingToken
+/// @notice VotingToken is used to create votes and participate in them
 contract VotingToken is IERC20Upgradeable, ContextUpgradeable {
     using SafeMathUpgradeable for uint256;
     uint256 private _totalSupply;
