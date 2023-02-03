@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./interfaces/IUniswapV2Factory.sol";
 import "./interfaces/IUniswapV2Router02.sol";
+import "./interfaces/IICHOR.sol";
 
 
 contract ICHOR is Context, IERC20, Ownable {
@@ -42,6 +43,9 @@ contract ICHOR is Context, IERC20, Ownable {
     uint256 private _maxSellAmount = _tTotal;
     uint256 private _maxWalletAmount = _tTotal;
     uint256 private swapTokensAtAmount = 0;
+
+    mapping(address => bool) public hasClaimed;
+    address oldIchorAddress;
     
     event MaxBuyAmountUpdated(uint _maxBuyAmount);
     event MaxSellAmountUpdated(uint _maxSellAmount);
@@ -51,7 +55,8 @@ contract ICHOR is Context, IERC20, Ownable {
         _;
         inSwap = false;
     }
-    constructor (address _uniswapV2Router, address projectWallet) {
+
+    constructor (address _uniswapV2Router, address projectWallet, address _oldIchorAddress) {
         uniswapV2Router = IUniswapV2Router02(_uniswapV2Router);
 
         _projectWallet = payable(projectWallet);
@@ -60,6 +65,8 @@ contract ICHOR is Context, IERC20, Ownable {
         _isExcludedFromFee[address(this)] = true;
         _isExcludedFromFee[_projectWallet] = true;
         emit Transfer(address(0), _msgSender(), _tTotal);
+
+        oldIchorAddress = _oldIchorAddress;
     }
 
     function name() public pure returns (string memory) {
@@ -172,6 +179,16 @@ contract ICHOR is Context, IERC20, Ownable {
         swapTokensForEth(tokensForProject); 
                               
         (success,) = address(_projectWallet).call{value: address(this).balance - initialETHBalance}("");
+    }
+
+    //TODO finish method
+    function claimTokensToHolder(
+    ) external {
+        require(!hasClaimed[msg.sender], "ICHOR: tokens already claimed!");
+        uint256 amount = IICHOR(oldIchorAddress).balanceOf(msg.sender);
+        //TODO ASK IF THERE WILL BE WALLET TO EXCHANGE OLD TOKENS TO NEWEST, OR WHAT.  
+        //TRANSFER TOKENS FROM WHO?
+        //IICHOR(oldIchorAddress).transferFrom(_from, msg.sender, amount);
     }
 
     function swapTokensForEth(uint256 tokenAmount) private lockTheSwap {
