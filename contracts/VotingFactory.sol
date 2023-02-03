@@ -5,9 +5,9 @@ import '@openzeppelin/contracts/proxy/Clones.sol';
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import './Voting.sol';
 import './VotingAllowList.sol';
-import './IVotingFactory.sol';
-import './IVotingInitialize.sol';
-import './IRPVSale.sol';
+import './interfaces/IVotingFactory.sol';
+import './interfaces/IVotingInitialize.sol';
+import './interfaces/IRPVSale.sol';
 
 /// @title VotingFactory contract
 /// @notice Contract to create votings
@@ -47,7 +47,7 @@ contract VotingFactory is AccessControl, IVotingFactory {
     /// @notice Array of voting instances
     votingInstance[] public votingInstances;
 
-    /// @return mVotingInstances Retirns address of voting instance
+    /// @dev return mVotingInstances Retirns address of voting instance
     mapping (address => bool) mVotingInstances;
 
     /// @notice Address of RPVToken

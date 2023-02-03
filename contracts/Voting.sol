@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import './VotingToken.sol';
-import './IVotingFactory.sol';
-import './IVotingInitialize.sol';
+import './interfaces/IVotingFactory.sol';
+import './interfaces/IVotingInitialize.sol';
 
 /// @title Voting contract
 contract Voting is VotingToken, IVotingInitialize {
@@ -14,7 +14,7 @@ contract Voting is VotingToken, IVotingInitialize {
         address voterAddress;
         bool choice;
     }
-    /// @return params Returns initialization params for Voting
+    /// @dev return params Returns initialization params for Voting
     Params public params;
 
     /// @return factory Returns address of VotingFactory contract
@@ -110,9 +110,9 @@ contract Voting is VotingToken, IVotingInitialize {
     }
 
     /// @notice Voting stats
-    /// @return totalForVotes Amount of voters who voted "for"
-    /// @return totalAgainstVotes Amount of voters who voted "against"
-    /// @return getVoterCountlength Total amount of voters
+    /// @return _for Amount of voters who voted "for"
+    /// @return _against Amount of voters who voted "against"
+    /// @return _count Total amount of voters
     function getStats()
         public
         view

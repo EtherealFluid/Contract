@@ -6,7 +6,7 @@
     "@openzeppelin/test-helpers": "^0.5.16"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^2.0.1",
     "@nomiclabs/hardhat-truffle5": "^2.0.7",
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "web3": "^1.8.1"
