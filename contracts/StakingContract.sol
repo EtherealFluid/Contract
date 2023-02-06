@@ -7,9 +7,8 @@ import "./interfaces/ISacrificeToken.sol";
 
 contract StakingContract is Ownable {
     struct Stake {
-        address user;
         uint256 stakedAmount;
-        uint256 lastTimeStaked;
+        uint256 timeStakeEnds;
     }
 
     constructor (address ichorToken_, address sacrificeToken_, uint256 stakingPeriod_) {
@@ -28,8 +27,9 @@ contract StakingContract is Ownable {
     address private ichorToken;
     address private sacrificeToken;
 
-    mapping (address => uint256) private stakedAmount;
-    mapping (address => uint256) private timeStakeEnds;
+    //mapping (address => uint256) private stakedAmount;
+    //mapping (address => uint256) private timeStakeEnds;
+    mapping (address => Stake) private stakeInfo;
 
     modifier onlySacrifice {
         require(msg.sender == sacrificeToken, "StakingToken: caller is not sacrifice token!");
@@ -42,27 +42,36 @@ contract StakingContract is Ownable {
     }
 
     function getStakedAmount (address user) external returns(uint256) {
-        return stakedAmount[user];
+        return stakeInfo[user].stakedAmount;
+    }
+
+    function getTimeStakeEnds (address user) external returns(uint256) {
+        return stakeInfo[user].timeStakeEnds;
     }
 
     function stake (uint256 amount) external {
         IICHOR(ichorToken).transferFrom(msg.sender, address(this), amount);
-        stakedAmount[msg.sender] += amount;
+        //stakedAmount[msg.sender] += amount;
+        stakeInfo[msg.sender].stakedAmount += amount;
         totalStaked += amount;
         ISacrificeToken(sacrificeToken).mint(msg.sender, amount);
-        timeStakeEnds[msg.sender] = block.timestamp + stakingPeriod;
+        stakeInfo[msg.sender].timeStakeEnds = block.timestamp + stakingPeriod;
+        //timeStakeEnds[msg.sender] = block.timestamp + stakingPeriod;
     }
-
 
     //TODO ASK WHAT TO DO WITH 15% OF REMAINING TOKENS AFTER PENALTY
     //TODO ASK IF USER CAN STAKE ADDITIONAL TOKENS TO ALREADY STAKED TOKENS.
     function unstake (uint256 amount) external readyToUnstake {
-        require(stakedAmount[msg.sender] > 0, "StakingContract: no tokens staked!");
+        require(stakeInfo[msg.sender].stakedAmount > 0, "StakingContract: no tokens staked!");
         ISacrificeToken(sacrificeToken).burn(msg.sender, amount);
-        if (timeStakeEnds[msg.sender] > block.timestamp) {
+        if (stakeInfo[msg.sender].timeStakeEnds <= block.timestamp) {
+            IICHOR(ichorToken).transfer(msg.sender, amount);
+        } else {
             uint256 amountToUnstake = amount - (amount * 15 ) / denominator;
             IICHOR(ichorToken).transfer(msg.sender, amountToUnstake);
         }
+        stakeInfo[msg.sender].stakedAmount -= amount;
+
         //TODO TRANSFER ICHOR REWARD TOKENS DISTRIBUTED IN REFLECTION MECHANISM
 
     }
@@ -71,9 +80,10 @@ contract StakingContract is Ownable {
         stakingPeriod = stakingPeriod_;
     }
 
+    //TODO transfer stakePeriod? Когда можно передать токены? если раньше времени их передать или передать другой кошель то можно избежать пенальти
     function stakeTransfer(address from, address to, uint256 amount) external onlySacrifice {
-        stakedAmount[from] -= amount;
-        stakedAmount[to] += amount;
+        stakeInfo[from].stakedAmount -= amount;
+        stakeInfo[to].stakedAmount += amount;
     }
 
 }

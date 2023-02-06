@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import './VotingToken.sol';
 import './interfaces/IVotingFactory.sol';
 import './interfaces/IVotingInitialize.sol';
-import './interfaces/IICHOR.sol';
-
-//import './interfaces/UnicornToken.sol';
 
 /// @title Voting contract
-contract Voting is IVotingInitialize {
+contract Voting is VotingToken, IVotingInitialize {
 
     using SafeMathUpgradeable for uint256;
 
@@ -19,21 +17,19 @@ contract Voting is IVotingInitialize {
     /// @dev return params Returns initialization params for Voting
     Params public params;
 
-/*     /// @return factory Returns address of VotingFactory contract
-    IVotingFactory public factory; */
+    /// @return factory Returns address of VotingFactory contract
+    IVotingFactory public factory;
+
+    /// @return rpvToken Returns address of RPVToken contract
+    IERC20Upgradeable public rpvToken;
+
+    /// @return rpvSale Returns address of RPVsale contract
+    address public rpvSale;
 
     uint256 internal totalForVotes;
     uint256 internal totalAgainstVotes;
     mapping(address => bool) internal mVoters;
     ballot[] internal voters;
-
-    //address unicornAddress;
-    IICHOR public ichorToken;
-    //address ichorTokenAddress;
-
-    bool resultCompleted;
-    address applicant;
-    
 
     /// @notice Emitted when user votes
     /// @param voter Address of voter
@@ -52,48 +48,48 @@ contract Voting is IVotingInitialize {
     /// @param _total Total amount of voters
     event VotingFailed(uint256 _for, uint256 _against, uint256 _total);
 
-    modifier votingResultNotCompleted() {
-        require(!resultCompleted, 'Voting result already completed!');
-        _;
-    }
-
     modifier tokenHoldersOnly() {
-        require(IICHOR.balanceOf(_msgSender()) >= 50 * 10 ^ 9, 'Not enough voting tkn');
+        require(balanceOf(_msgSender()) >= 1, 'Not enough voting tkn');
         _;
     }
-
     modifier votingIsOver() {
         require(block.timestamp > params.start + params.duration, 'Voting is not over');
         _;
     }
-
-    modifier votingIsActive() {
+    modifier votingIsActive {
         require(
             block.timestamp >= params.start && block.timestamp <= (params.start + params.duration),
             'Voting is over'
         );
         _;
     }
-
     modifier neverVoted() {
         require(!mVoters[_msgSender()], 'Voting: already voted');
         _;
     }
 
-    function initialize(
-        Params memory _params,
-        address _applicant,
-        address _ichorTokenAddress
-    ) public virtual override initializer {
-        VotingToken.initialize();
-        //factory = IVotingFactory(_msgSender());
-        params = _params;
-        //TODO COPY INSTANCE IMPLEMENTATION TO ALL CONTRACTS
-        ichorToken = IICHOR(_ichorTokenAddress);
-        resultCompleted = false;
-        applicant = _applicant;
+    modifier onlyOperator() {
+        require(_msgSender() == factory.operator(), 'Caller is not an operator');
+        _;
     }
 
+    /// @notice Initialization method
+    /// @param _params Initialization params for Voting
+    /// @param _rpvSale Address of RPVSale contract
+    /// @param _rpvToken Address of RPVToken contract
+    function initialize(
+        Params memory _params,
+        address _rpvSale,
+        IERC20Upgradeable _rpvToken
+    ) public virtual override initializer {
+        VotingToken.initialize();
+        factory = IVotingFactory(_msgSender());
+        params = _params;
+        rpvSale = _rpvSale;
+        rpvToken = _rpvToken;
+    }
+
+    /// @return addressVoters Array of addresses of voters
     function getAllVoters() external view returns (address[] memory) {
         address[] memory addressVoters = new address[](voters.length);
         for (uint256 i = 0; i < voters.length; i++) {
@@ -102,15 +98,21 @@ contract Voting is IVotingInitialize {
         return addressVoters;
     }
 
+    /// @return _voterIndex  Index of voter
     function getVoterByIndex(uint256 _voterIndex) external view returns (address) {
         require(_voterIndex < voters.length, 'Index does not exist');
         return voters[_voterIndex].voterAddress;
     }
 
+    /// @return length Total amount of voters
     function getVoterCount() public view returns (uint256) {
         return voters.length;
     }
 
+    /// @notice Voting stats
+    /// @return _for Amount of voters who voted "for"
+    /// @return _against Amount of voters who voted "against"
+    /// @return _count Total amount of voters
     function getStats()
         public
         view
@@ -123,37 +125,39 @@ contract Voting is IVotingInitialize {
         return (totalForVotes, totalAgainstVotes, getVoterCount());
     }
 
+    /// @notice Function of purchasing VoteTokens for RPVTokens
+    /// @param amount Amount of VoteTokens to buy
+    function buy(uint256 amount) external votingIsActive {
+        require(amount > 0, 'Voting: amount > 0');
+        uint256 decimals = 10 ** 18;
+        amount = amount.mul(decimals);
+        uint256 rpvAmount = amount.mul(decimals).div(params.buyVotingTokenRate);
+        rpvToken.transferFrom(_msgSender(), rpvSale, rpvAmount);
+        _mint(_msgSender(), amount.div(decimals)); 
+    }
+
+    /// @notice Function for voting "for". You can only vote once, if voting is still active and you are a VotingToken holder
     function voteFor() public virtual tokenHoldersOnly neverVoted votingIsActive {
         totalForVotes++;
-        //_burn(_msgSender(), 1);
-        //TODO transfer tokens to??
+        _burn(_msgSender(), 1);
         voters.push(ballot({voterAddress: _msgSender(), choice: true}));
         mVoters[_msgSender()] = true;
+        factory.votingReward(_msgSender());
         emit Voted(_msgSender(), true);
     }
 
+    /// @notice Function for voting "against". You can only vote once, if voting is still active and you are a VotingToken holder
     function voteAgainst() public virtual tokenHoldersOnly neverVoted votingIsActive {
         totalAgainstVotes++;
-        //_burn(_msgSender(), 1);
-        //TODO transfer tokens to??
+        _burn(_msgSender(), 1);
         voters.push(ballot({voterAddress: _msgSender(), choice: false}));
         mVoters[_msgSender()] = true;
+        factory.votingReward(_msgSender());
         emit Voted(_msgSender(), false);
     }
 
-    function finishVoting() external votingIsOver votingResultNotCompleted {
-        resultCompleted = true;
-        (uint256 _for, uint256 _against, uint256 _total) = getStats();
-        if (_total >= params.minQtyVoters && _for > _against) {
-            if (params.votingType == UNICORN) {
-                //TODO set suggested addres unicorn
-            } else if (params.votingType == CHARITY) {
-                IICHOR.setCharityAddress(applicant);
-            }
-        }
-    }
-
-    function getVotingResults () external votingIsOver {
+    /// @notice Function for getting voting stats after voting is over. Also returns whether the vote was successful or not
+    function finishVoting() external votingIsOver {
         (uint256 _for, uint256 _against, uint256 _total) = getStats();
         if (_total >= params.minQtyVoters) {
             emit VotingSuccessful(_for, _against, _total);

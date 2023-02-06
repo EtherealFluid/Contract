@@ -31,7 +31,7 @@ contract SacrificeToken is ERC20, Ownable{
         _mint(to, amount);
     }
 
-    function burn (address from, uint256 amount) external {
+    function burn (address from, uint256 amount) external onlyStaking {
         _burn(from, amount);
     }
     

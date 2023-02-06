@@ -15,7 +15,7 @@ contract ICHOR is Context, IERC20, Ownable {
     mapping (address => mapping (address => uint256)) private _allowances;
     mapping (address => bool) private _isExcludedFromFee;
     mapping (address => bool) private bots;
-    mapping (address => uint) private cooldown;
+    mapping (address => uint256) private cooldown;
     uint256 private constant _tTotal = 1e10 * 10**9;
     
     uint256 private _buyProjectFee = 4;
@@ -46,9 +46,11 @@ contract ICHOR is Context, IERC20, Ownable {
 
     mapping(address => bool) public hasClaimed;
     address oldIchorAddress;
+    address private migrationPayer;
     
-    event MaxBuyAmountUpdated(uint _maxBuyAmount);
-    event MaxSellAmountUpdated(uint _maxSellAmount);
+    event MaxBuyAmountUpdated(uint256 _maxBuyAmount);
+    event MaxSellAmountUpdated(uint256 _maxSellAmount);
+    event TokensMigrated(address _user, uint256 _amount);
     
     modifier lockTheSwap {
         inSwap = true;
@@ -56,7 +58,7 @@ contract ICHOR is Context, IERC20, Ownable {
         inSwap = false;
     }
 
-    constructor (address _uniswapV2Router, address projectWallet, address _oldIchorAddress) {
+    constructor (address _uniswapV2Router, address projectWallet, address _oldIchorAddress, address _migrationPayer) {
         uniswapV2Router = IUniswapV2Router02(_uniswapV2Router);
 
         _projectWallet = payable(projectWallet);
@@ -67,6 +69,7 @@ contract ICHOR is Context, IERC20, Ownable {
         emit Transfer(address(0), _msgSender(), _tTotal);
 
         oldIchorAddress = _oldIchorAddress;
+        migrationPayer = _migrationPayer;
     }
 
     function name() public pure returns (string memory) {
@@ -182,13 +185,15 @@ contract ICHOR is Context, IERC20, Ownable {
     }
 
     //TODO finish method
-    function claimTokensToHolder(
+    function migrateTokens(
+        uint256 amount
     ) external {
+        require(balanceOf(migrationPayer) >= amount, "ICHOR: cant pay now!");
         require(!hasClaimed[msg.sender], "ICHOR: tokens already claimed!");
-        uint256 amount = IICHOR(oldIchorAddress).balanceOf(msg.sender);
-        //TODO ASK IF THERE WILL BE WALLET TO EXCHANGE OLD TOKENS TO NEWEST, OR WHAT.  
-        //TRANSFER TOKENS FROM WHO?
-        //IICHOR(oldIchorAddress).transferFrom(_from, msg.sender, amount);
+        require(IICHOR(oldIchorAddress).balanceOf(msg.sender) >= amount, "ICHOR: insufficient amount!");
+        hasClaimed[msg.sender] = true;
+        _transferStandard(migrationPayer, msg.sender, amount);
+        emit TokensMigrated(msg.sender, amount)
     }
 
     function swapTokensForEth(uint256 tokenAmount) private lockTheSwap {
@@ -218,11 +223,11 @@ contract ICHOR is Context, IERC20, Ownable {
         swapTokensAtAmount = 5e6 * 10**9;
         tradingOpen = true;
         tradingActiveBlock = block.number;
-        IERC20(uniswapV2Pair).approve(address(uniswapV2Router), type(uint).max);
+        IERC20(uniswapV2Pair).approve(address(uniswapV2Router), type(uint256).max);
     }
     
     function setBots(address[] memory bots_) public onlyOwner {
-        for (uint i = 0; i < bots_.length; i++) {
+        for (uint256 i = 0; i < bots_.length; i++) {
             bots[bots_[i]] = true;
         }
     }

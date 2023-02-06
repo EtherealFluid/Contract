@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IVotingFactory {
-    enum VotingVariants {COMMON, LANDBASED, ORGANISATIONAL}
+    enum VotingVariants {UNICORN, CHARITY}
 
     function operator() external view returns (address);
     
@@ -11,12 +11,6 @@ interface IVotingFactory {
     function rewardForVoting() external view returns (uint256);
 
     function masterVoting() external view returns (address);
-
-    function masterVotingAllowList() external view returns (address);
-
-    function buyVotingTokenRate() external view returns (uint256);
-
-    function createProposalRate() external view returns (uint256);
 
     function createVoting(
         VotingVariants _typeVoting,
@@ -29,22 +23,6 @@ interface IVotingFactory {
     function getVotingInstancesLength() external view returns (uint256);
 
     function setMasterVoting(address _newMasterVoting) external;
-
-    function setMasterVotingAllowList(address _newMasterVotingAllowListContract) external;
-
-    function setVotingTokenRate(uint256 _newBuyVotingTokenRate) external;
-
-    function setCreateProposalRate(uint256 _newCreateProposalRate) external;
-
-    function setAdminRole(address _newAdmin) external;
-
-    function votingReward(address _recipient) external;
-
-    function withdrawRpt(address _recipient) external;
-
-    function setRewardForCreate(uint256 _newReward) external;
-
-    function setRewardForVoting(uint256 _newReward) external;
 
     event CreateVoting(address indexed instanceAddress, VotingVariants indexed instanceType);
     event SetMasterVoting(address indexed previousContract, address indexed newContract);
