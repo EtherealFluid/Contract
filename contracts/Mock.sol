@@ -1,281 +1,182 @@
-pragma solidity 0.8.6;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-// https://docs.openzeppelin.com/contracts/4.x/api/proxy#transparent-vs-uups
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
+import "./interfaces/IICHOR.sol";
+import "./interfaces/ISacrificeToken.sol";
 
-contract Staking is
-  Initializable,
-  UUPSUpgradeable,
-  AccessControlUpgradeable,
-  PausableUpgradeable
-{
-  using EnumerableSet for EnumerableSet.AddressSet;
+contract StakingRewards is Ownable {
 
-  IERC20 private stkToken;
-  EnumerableSet.AddressSet private stakeholders;
+    uint256 public finishAt;
 
-  struct Stake {
-    uint256 stakedSTK;
-    uint256 shares;
-  }
+    uint256 public updatedAt;
 
-  bytes32 private ADMIN_ROLE;
-  uint256 private base;
-  uint256 private totalStakes;
-  uint256 private totalShares;
-  bool private initialRatioFlag;
+    uint256 public rewardRate;
 
-  mapping(address => Stake) private stakeholderToStake;
+    uint256 public rewardPerTokenStored;
 
-  event StakeAdded(
-    address indexed stakeholder,
-    uint256 amount,
-    uint256 shares,
-    uint256 timestamp
-  );
-  event StakeRemoved(
-    address indexed stakeholder,
-    uint256 amount,
-    uint256 shares,
-    uint256 reward,
-    uint256 timestamp
-  );
+    uint256 public stakingPeriod;
 
-  modifier hasAdminRole() {
-    require(hasRole(ADMIN_ROLE, msg.sender), "Caller is not an admin");
-    _;
-  }
-  modifier isInitialRatioNotSet() {
-    require(!initialRatioFlag, "Initial Ratio has already been set");
-    _;
-  }
+    mapping(address => uint256) public userRewardPerTokenPaid;
 
-  modifier isInitialRatioSet() {
-    require(initialRatioFlag, "Initial Ratio has not yet been set");
-    _;
-  }
+    mapping(address => uint256) public rewards;
 
-  function initialize(
-    address admin1,
-    address admin2,
-    address _stkToken
-  ) public initializer {
-    AccessControlUpgradeable.__AccessControl_init();
-    PausableUpgradeable.__Pausable_init();
+    //uint256 public totalSupply;
 
-    ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    uint256 denominator = 100;
 
-    // Set up roles
-    _setupRole(ADMIN_ROLE, admin1);
-    _setupRole(ADMIN_ROLE, admin2);
+    address private ichorToken;
+    address private sacrificeToken;
 
-    stkToken = IERC20(_stkToken);
-    base = 10**18;
-  }
+    mapping(address => bool) isStaked;
 
-  function _authorizeUpgrade(address) internal override hasAdminRole {}
+    mapping(address => uint256) timeStakeEnds;
 
-  function pauseContract() public hasAdminRole {
-    _pause();
-  }
-
-  function unPauseContract() public hasAdminRole {
-    _unpause();
-  }
-
-  function setInitialRatio(uint256 stakeAmount)
-    public
-    isInitialRatioNotSet
-    hasAdminRole
-  {
-    require(
-      totalShares == 0 && stkToken.balanceOf(address(this)) == 0,
-      "Stakes and shares are non-zero"
-    );
-
-    stakeholders.add(msg.sender);
-    stakeholderToStake[msg.sender] = Stake({
-      stakedSTK: stakeAmount,
-      shares: stakeAmount
-    });
-    totalStakes = stakeAmount;
-    totalShares = stakeAmount;
-    initialRatioFlag = true;
-
-    require(
-      stkToken.transferFrom(msg.sender, address(this), stakeAmount),
-      "STK transfer failed"
-    );
-
-    emit StakeAdded(msg.sender, stakeAmount, stakeAmount, block.timestamp);
-  }
-
-  function createStake(uint256 stakeAmount)
-    public
-    whenNotPaused
-    isInitialRatioSet
-  {
-    uint256 shares = (stakeAmount * totalShares) /
-      stkToken.balanceOf(address(this));
-
-    require(
-      stkToken.transferFrom(msg.sender, address(this), stakeAmount),
-      "STK transfer failed"
-    );
-
-    stakeholders.add(msg.sender);
-    stakeholderToStake[msg.sender].stakedSTK += stakeAmount;
-    stakeholderToStake[msg.sender].shares += shares;
-    totalStakes += stakeAmount;
-    totalShares += shares;
-
-    emit StakeAdded(msg.sender, stakeAmount, shares, block.timestamp);
-  }
-
-  function removeStake(uint256 stakeAmount) public whenNotPaused {
-    uint256 stakeholderStake = stakeholderToStake[msg.sender].stakedSTK;
-    uint256 stakeholderShares = stakeholderToStake[msg.sender].shares;
-
-    require(stakeholderStake >= stakeAmount, "Not enough staked!");
-
-    uint256 stakedRatio = (stakeholderStake * base) / stakeholderShares;
-    uint256 currentRatio = (stkToken.balanceOf(address(this)) * base) /
-      totalShares;
-    uint256 sharesToWithdraw = (stakeAmount * stakeholderShares) /
-      stakeholderStake;
-
-    uint256 rewards = 0;
-
-    if (currentRatio > stakedRatio) {
-      rewards = (sharesToWithdraw * (currentRatio - stakedRatio)) / base;
+    constructor(address ichorToken_, address sacrificeToken_) {
+        ichorToken = ichorToken_;
+        sacrificeToken = sacrificeToken_;
     }
 
-    stakeholderToStake[msg.sender].shares -= sharesToWithdraw;
-    stakeholderToStake[msg.sender].stakedSTK -= stakeAmount;
-    totalStakes -= stakeAmount;
-    totalShares -= sharesToWithdraw;
+    modifier updateReward(address _account) {
+        rewardPerTokenStored = rewardPerToken();
+        updatedAt = lastTimeRewardApplicable();
 
-    require(
-      stkToken.transfer(msg.sender, stakeAmount + rewards),
-      "STK transfer failed"
-    );
+        if (_account != address(0)) {
+            rewards[_account] = earned(_account);
+            userRewardPerTokenPaid[_account] = rewardPerTokenStored;
+        }
 
-    if (stakeholderToStake[msg.sender].stakedSTK == 0) {
-      stakeholders.remove(msg.sender);
+        _;
     }
 
-    emit StakeRemoved(
-      msg.sender,
-      stakeAmount,
-      sharesToWithdraw,
-      rewards,
-      block.timestamp
-    );
-  }
-
-  function getStkPerShare() public view returns (uint256) {
-    return (stkToken.balanceOf(address(this)) * base) / totalShares;
-  }
-
-  function stakeOf(address stakeholder) public view returns (uint256) {
-    return stakeholderToStake[stakeholder].stakedSTK;
-  }
-
-  function sharesOf(address stakeholder) public view returns (uint256) {
-    return stakeholderToStake[stakeholder].shares;
-  }
-
-  function rewardOf(address stakeholder) public view returns (uint256) {
-    uint256 stakeholderStake = stakeholderToStake[stakeholder].stakedSTK;
-    uint256 stakeholderShares = stakeholderToStake[stakeholder].shares;
-
-    if (stakeholderShares == 0) {
-      return 0;
+    modifier onlySacrifice {
+        require(msg.sender == sacrificeToken, "StakingContract: caller is not sacrifice token!");
+        _;
     }
 
-    uint256 stakedRatio = (stakeholderStake * base) / stakeholderShares;
-    uint256 currentRatio = (stkToken.balanceOf(address(this)) * base) /
-      totalShares;
-
-    if (currentRatio <= stakedRatio) {
-      return 0;
+    modifier stakePeriodEnded (address from) {
+        require(block.timestamp >= timeStakeEnds[from], "StakingContract: period not ended!");
+        _;
     }
 
-    uint256 rewards = (stakeholderShares * (currentRatio - stakedRatio)) / base;
-
-    return rewards;
-  }
-
-  function rewardForSTK(address stakeholder, uint256 stkAmount)
-    public
-    view
-    returns (uint256)
-  {
-    uint256 stakeholderStake = stakeholderToStake[stakeholder].stakedSTK;
-    uint256 stakeholderShares = stakeholderToStake[stakeholder].shares;
-
-    require(stakeholderStake >= stkAmount, "Not enough staked!");
-
-    uint256 stakedRatio = (stakeholderStake * base) / stakeholderShares;
-    uint256 currentRatio = (stkToken.balanceOf(address(this)) * base) /
-      totalShares;
-    uint256 sharesToWithdraw = (stkAmount * stakeholderShares) /
-      stakeholderStake;
-
-    if (currentRatio <= stakedRatio) {
-      return 0;
+    function isReadyToUnstake() external returns(bool) {
+        return(block.timestamp >= timeStakeEnds[msg.sender]);
     }
 
-    uint256 rewards = (sharesToWithdraw * (currentRatio - stakedRatio)) / base;
-
-    return rewards;
-  }
-
-  function getTotalStakes() public view returns (uint256) {
-    return totalStakes;
-  }
-
-  function getTotalShares() public view returns (uint256) {
-    return totalShares;
-  }
-
-  function getCurrentRewards() public view returns (uint256) {
-    return stkToken.balanceOf(address(this)) - totalStakes;
-  }
-
-  function getTotalStakeholders() public view returns (uint256) {
-    return stakeholders.length();
-  }
-
-  function refundLockedSTK(uint256 from, uint256 to) public hasAdminRole {
-    require(to <= stakeholders.length(), "Invalid `to` param");
-    uint256 s;
-
-    for (s = from; s < to; s += 1) {
-      totalStakes -= stakeholderToStake[stakeholders.at(s)].stakedSTK;
-
-      require(
-        stkToken.transfer(
-          stakeholders.at(s),
-          stakeholderToStake[stakeholders.at(s)].stakedSTK
-        ),
-        "STK transfer failed"
-      );
-
-      stakeholderToStake[stakeholders.at(s)].stakedSTK = 0;
+    function getStakedAmount (address user) external returns(uint256) {
+        return ISacrificeToken(sacrificeToken).balanceOf(user);
     }
-  }
 
-  function removeLockedRewards() public hasAdminRole {
-    require(totalStakes == 0, "Stakeholders still have stakes");
+    function getTimeStakeEnds (address user) external returns(uint256) {
+        return timeStakeEnds[user];
+    }
 
-    uint256 balance = stkToken.balanceOf(address(this));
+    function setStakingPeriod (uint256 stakingPeriod_) external onlyOwner {
+        stakingPeriod = stakingPeriod_;
+    }
 
-    require(stkToken.transfer(msg.sender, balance), "STK transfer failed");
-  }
+    function lastTimeRewardApplicable() public view returns (uint256) {
+        return _min(finishAt, block.timestamp);
+    }
+
+    function rewardPerToken() public view returns (uint256) {
+        uint256 totalSupply = ISacrificeToken(sacrificeToken).totalSupply();
+        if (totalSupply == 0) {
+            return rewardPerTokenStored;
+        }
+        //console.log(lastTimeRewardApplicable() - updatedAt);
+
+        return
+            rewardPerTokenStored +
+            (rewardRate * (lastTimeRewardApplicable() - updatedAt) * 1e18) /
+            totalSupply;
+    }
+
+    function stake(uint256 _amount) external updateReward(msg.sender) {
+        require(_amount > 0, "StakingContract: amount is 0!");
+        IICHOR(ichorToken).transferFrom(msg.sender, address(this), _amount);
+        //totalSupply += _amount;
+        isStaked[msg.sender] = true;
+        timeStakeEnds[msg.sender] = block.timestamp + stakingPeriod;
+        ISacrificeToken(sacrificeToken).mint(msg.sender, _amount);
+    }
+
+    function withdraw() external updateReward(msg.sender) {
+        //require(rewards[msg.sender] > 0, "StakingContract: no reward earned!");
+        require(ISacrificeToken(sacrificeToken).balanceOf(msg.sender) > 0, "StakingContract: no tokens staked!");
+        uint256 amountToTransfer = rewards[msg.sender];
+        uint256 amountToUnstake = ISacrificeToken(sacrificeToken).balanceOf(msg.sender);
+        
+        ISacrificeToken(sacrificeToken).burn(msg.sender, ISacrificeToken(sacrificeToken).balanceOf(msg.sender));
+        isStaked[msg.sender] = false;
+        rewards[msg.sender] = 0;
+        
+        if (block.timestamp >= timeStakeEnds[msg.sender]) {
+            //totalSupply -= amountToTransfer;
+            IICHOR(ichorToken).transfer(msg.sender, amountToTransfer);
+        } else {
+            uint256 amountWithFee = amountToTransfer - (amountToTransfer * 15 ) / denominator;
+            //totalSupply -= amountWithFee;
+            IICHOR(ichorToken).transfer(msg.sender, amountWithFee);
+            console.log(amountToTransfer - amountWithFee);
+            notifyRewardAmount(amountToTransfer - amountWithFee);
+        }
+        IICHOR(ichorToken).transfer(msg.sender, amountToUnstake);
+    }
+
+    function earned(address _account) public view returns (uint256) {
+        uint256 balance = ISacrificeToken(sacrificeToken).balanceOf(_account);
+        console.log("EARNED: ", rewardPerToken());
+        console.log("EARNED: ", userRewardPerTokenPaid[_account]);
+        console.log("EARNED: ", rewards[_account]);
+        return
+            ((balance *
+                (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
+            rewards[_account];
+    }
+
+    function getReward() external stakePeriodEnded(msg.sender) updateReward(msg.sender) {
+        uint256 reward = rewards[msg.sender];
+        if (reward > 0) {
+            rewards[msg.sender] = 0;
+            IICHOR(ichorToken).transfer(msg.sender, reward);
+        }
+    }
+
+    function notifyRewardAmount(
+        uint256 _amount
+    ) public  updateReward(address(0)) {
+        if (block.timestamp >= finishAt) {
+            rewardRate = _amount / 1;
+        } else {
+            uint256 remainingRewards = (finishAt - block.timestamp) * rewardRate;
+            rewardRate = (_amount + remainingRewards) / 1;
+        }
+
+        console.log("RewardRate: ", rewardRate);
+
+        require(rewardRate > 0, "reward rate = 0");
+        require(
+            rewardRate * 1 <= IICHOR(ichorToken).balanceOf(address(this)),
+            "reward amount > balance"
+        );
+
+        finishAt = block.timestamp + 1;
+        updatedAt = block.timestamp;
+    }
+
+    function _min(uint256 x, uint256 y) private pure returns (uint256) {
+        return x <= y ? x : y;
+    }
+
+    function setMinimalStakingPeriod (uint256 stakingPeriod_) external onlyOwner {
+        stakingPeriod = stakingPeriod_;
+    }
+
+    function stakeTransfer(address from, address to, uint256 amount) external onlySacrifice stakePeriodEnded(from) {
+        ISacrificeToken(sacrificeToken).transferFrom(from, to, amount);
+    }
+
 }

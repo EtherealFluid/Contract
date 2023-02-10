@@ -36,9 +36,8 @@ contract StakingContract is Ownable {
         _;
     }
 
-    modifier readyToUnstake {
-        require(block.timestamp >= timeStakeEnds[msg.sender], "StakingToken: cant unstake yet!");
-        _;
+    function isReadyToUnstake() external returns(bool) {
+        return(block.timestamp >= timeStakeEnds[msg.sender]);
     }
 
     function getStakedAmount (address user) external returns(uint256) {
