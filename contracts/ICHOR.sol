@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./interfaces/IUniswapV2Factory.sol";
 import "./interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IICHOR.sol";
+import "./interfaces/IVoting.sol";
 
 
 contract ICHOR is Context, IERC20, Ownable {
@@ -25,6 +26,11 @@ contract ICHOR is Context, IERC20, Ownable {
     uint256 private _previousSellProjectFee = _sellProjectFee;
        
     address payable private _projectWallet;
+
+    address private _charity;
+
+    IVoting public voting;
+    address public stakingAddress;
     
     string private constant _name = "Ethereal Fluid";
     string private constant _symbol = "ICHOR";
@@ -52,13 +58,19 @@ contract ICHOR is Context, IERC20, Ownable {
     event MaxSellAmountUpdated(uint256 _maxSellAmount);
     event TokensMigrated(address _user, uint256 _amount);
     
+    //TODO OK
     modifier lockTheSwap {
         inSwap = true;
         _;
         inSwap = false;
     }
 
-    constructor (address _uniswapV2Router, address projectWallet, address _oldIchorAddress, address _migrationPayer) {
+    modifier onlyVoting {
+        require(voting.isVotingInstance(msg.sender), "ICHOR: caller is not a voting contract!");
+        _;
+    }
+
+    constructor (address _uniswapV2Router, address projectWallet, address _oldIchorAddress, address _migrationPayer, address charity, address _votingAddress, address _stakingAddress) {
         uniswapV2Router = IUniswapV2Router02(_uniswapV2Router);
 
         _projectWallet = payable(projectWallet);
@@ -70,37 +82,48 @@ contract ICHOR is Context, IERC20, Ownable {
 
         oldIchorAddress = _oldIchorAddress;
         migrationPayer = _migrationPayer;
+        _charity = charity;
+        voting = IVoting(_votingAddress);
+        stakingAddress = _stakingAddress;
     }
 
+    //TODO OK
     function name() public pure returns (string memory) {
         return _name;
     }
 
+    //TODO OK
     function symbol() public pure returns (string memory) {
         return _symbol;
     }
 
+    //TODO OK
     function decimals() public pure returns (uint8) {
         return _decimals;
     }
 
+    //TODO OK
     function totalSupply() public pure override returns (uint256) {
         return _tTotal;
     }
 
+    //TODO OK
     function balanceOf(address account) public view override returns (uint256) {
         return _rOwned[account];
     }
 
+    //TODO OK
     function transfer(address recipient, uint256 amount) public override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
 
+    //TODO OK
     function allowance(address owner, address spender) public view override returns (uint256) {
         return _allowances[owner][spender];
     }
 
+    //TODO OK
     function approve(address spender, uint256 amount) public override returns (bool) {
         _approve(_msgSender(), spender, amount);
         return true;
@@ -112,14 +135,31 @@ contract ICHOR is Context, IERC20, Ownable {
         return true;
     }
 
+    //TODO OK
     function setCooldownEnabled(bool onoff) external onlyOwner() {
         cooldownEnabled = onoff;
     }
 
+    function setCharityAddress(address charity) external onlyVoting {
+        _charity = charity;
+    }
+
+    function getCharityAddress() external returns (address) {
+        return _charity;
+    }
+
+    //TODO FINISH AFTER RQ 
+    function addNewUnicorn(address unicorn) external onlyVoting {}
+
+    //TODO ASK IF NEEDED
+    function removeUnicorn(address unicorn) external onlyVoting {}
+
+    //TODO OK
     function setSwapEnabled(bool onoff) external onlyOwner(){
         swapEnabled = onoff;
     }
 
+    //TODO OK
     function _approve(address owner, address spender, uint256 amount) private {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
@@ -184,7 +224,7 @@ contract ICHOR is Context, IERC20, Ownable {
         (success,) = address(_projectWallet).call{value: address(this).balance - initialETHBalance}("");
     }
 
-    //TODO finish method
+    //TODO TEST method
     function migrateTokens(
         uint256 amount
     ) external {
@@ -210,6 +250,7 @@ contract ICHOR is Context, IERC20, Ownable {
         );
     }
        
+    //TODO question about trading rates
     function openTrading() external onlyOwner() {
         require(!tradingOpen,"trading is already open");        
         _approve(address(this), address(uniswapV2Router), _tTotal);
@@ -226,30 +267,36 @@ contract ICHOR is Context, IERC20, Ownable {
         IERC20(uniswapV2Pair).approve(address(uniswapV2Router), type(uint256).max);
     }
     
+    //TODO OK
     function setBots(address[] memory bots_) public onlyOwner {
         for (uint256 i = 0; i < bots_.length; i++) {
             bots[bots_[i]] = true;
         }
     }
 
+    //TODO OK
     function setMaxBuyAmount(uint256 maxBuy) public onlyOwner {
         _maxBuyAmount = maxBuy;
     }
 
+    //TODO OK
     function setMaxSellAmount(uint256 maxSell) public onlyOwner {
         _maxSellAmount = maxSell;
     }
     
+    //TODO OK
     function setMaxWalletAmount(uint256 maxToken) public onlyOwner {
         _maxWalletAmount = maxToken;
     }
-    
+
+    //TODO OK
     function setSwapTokensAtAmount(uint256 newAmount) public onlyOwner {
         require(newAmount >= 1e3 * 10**9, "Swap amount cannot be lower than 0.001% total supply.");
         require(newAmount <= 5e6 * 10**9, "Swap amount cannot be higher than 0.5% total supply.");
         swapTokensAtAmount = newAmount;
     }
 
+    //TODO OK
     function setProjectWallet(address projectWallet) public onlyOwner() {
         require(projectWallet != address(0), "projectWallet address cannot be 0");
         _isExcludedFromFee[_projectWallet] = false;
@@ -257,29 +304,35 @@ contract ICHOR is Context, IERC20, Ownable {
         _isExcludedFromFee[_projectWallet] = true;
     }
 
+    //TODO OK
     function excludeFromFee(address account) public onlyOwner {
         _isExcludedFromFee[account] = true;
     }
     
+    //TODO OK
     function includeInFee(address account) public onlyOwner {
         _isExcludedFromFee[account] = false;
     }
 
+    //TODO OK
     function setBuyFee(uint256 buyProjectFee) external onlyOwner {
         require(buyProjectFee <= 5, "Buy tax is hard coded to remain under 5%");
         _buyProjectFee = buyProjectFee;
     }
 
+    //TODO OK
     function setSellFee(uint256 sellProjectFee) external onlyOwner {
         require(sellProjectFee <= 99, "this is to help get rid of bots at launch. rest assured there are no bots when you ape frens!");
         _sellProjectFee = sellProjectFee;
         
     }
 
+    //TODO OK
     function setBlocksToBlacklist(uint256 blocks) public onlyOwner {
         blocksToBlacklist = blocks;
     }
 
+    //TODO OK
     function removeAllFee() private {
         if(_buyProjectFee == 0 && _sellProjectFee == 0) return;
         
@@ -290,11 +343,13 @@ contract ICHOR is Context, IERC20, Ownable {
         _sellProjectFee = 0;        
     }
     
+    //TODO OK
     function restoreAllFee() private {
         _buyProjectFee = _previousBuyProjectFee;
         _sellProjectFee = _previousSellProjectFee;
     }
     
+    //TODO OK
     function delBot(address notbot) public onlyOwner {
         bots[notbot] = false;
     }
@@ -320,25 +375,43 @@ contract ICHOR is Context, IERC20, Ownable {
     }
 
     function _takeFees(address sender, uint256 amount, bool isSell) private returns (uint256) {
-        uint256 pjctFee;
-        if(tradingActiveBlock + blocksToBlacklist >= block.number){
+        //uint256 pjctFee;
+        /* if(tradingActiveBlock + blocksToBlacklist >= block.number){
             pjctFee = 99;            
-        } else {
+        } *//*  else {
             if (isSell) {
                 pjctFee = _sellProjectFee;                
             } else {
                 pjctFee = _buyProjectFee;                
             }
+        } */
+
+        uint256 totalFeeAmount = amount.mul(4).div(100);
+        uint256 amountToCharity = totalFeeAmount.mul(50).div(100);
+        uint256 amountToStaking = (totalFeeAmount.sub(amountToCharity)).mul(85).div(100);
+        uint256 amountToUnicorns = totalFeeAmount.sub(amountToCharity.add(amountToStaking));
+
+        if(amountToCharity > 0) {
+            _transferStandard(sender, _charity, amountToCharity);
         }
-                
-        uint256 tokensForProject = amount.mul(pjctFee).div(100);
-        if(tokensForProject > 0) {
+
+        if(amountToStaking > 0) {
+            _transferStandard(sender, stakingAddress, amountToStaking);
+        }
+
+        //TODO WHERE TO TRANSFER
+        if(amountToUnicorns > 0) {
+            _transferStandard(sender, , amountToUnicorns);
+        }
+        //uint256 tokensForProject = amount.mul(pjctFee).div(100);
+        /* if(tokensForProject > 0) {
             _transferStandard(sender, address(this), tokensForProject);
-        }
+        } */
             
-        return amount -= tokensForProject;
+        return amount -= totalFeeAmount;
     }
 
+    //TODO OK
     receive() external payable {}
 
     function manualswap() public onlyOwner() {
@@ -346,7 +419,7 @@ contract ICHOR is Context, IERC20, Ownable {
         swapTokensForEth(contractBalance);
     }
     
-    
+    //TODO OK
     function withdrawStuckETH() external onlyOwner {
         bool success;
         (success,) = address(msg.sender).call{value: address(this).balance}("");

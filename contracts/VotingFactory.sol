@@ -75,6 +75,11 @@ contract VotingFactory is Ownable, IVotingFactory {
     function getVotingInstancesLength() external view override returns (uint256) {
         return votingInstances.length;
     }
+
+    function isVotingInstance(address instance) external view returns (bool) {
+        return mVotingInstances[instance];
+    }
+    
     
     function setMasterVoting(address _newMasterVoting) external override onlyOwner {
         require(_newMasterVoting != address(0), 'Address == address(0)');
