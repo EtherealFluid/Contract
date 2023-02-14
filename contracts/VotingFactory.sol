@@ -7,17 +7,12 @@ import './Voting.sol';
 import './interfaces/IVotingFactory.sol';
 
 contract VotingFactory is Ownable, IVotingFactory {
-
-    using SafeMathUpgradeable for uint256;
-
     struct votingInstance {
         address addressInstance;
         VotingVariants typeInstance;
     }
 
-    address public override operator;
-
-    address public override masterVoting;
+    address public masterVoting;
 
     votingInstance[] public votingInstances;
 
@@ -31,13 +26,16 @@ contract VotingFactory is Ownable, IVotingFactory {
         _;
     }
 
-    constructor(
-        address _operator,
-        address _ichorTokenAddress
-    ) {
-        require(_operator != address(0), 'Operator is zero address');
-        ichorToken = IICHOR(_ichorTokenAddress);
+    constructor() {
         masterVoting = address(new Voting());
+    }
+
+    function setIchorAddress (address ichorToken_) external onlyOwner {
+        ichorToken = IICHOR(ichorToken_);
+    }
+
+    function getIchorAddress () external view returns(address) {
+        return address(ichorToken);
     }
 
     function createVoting(
@@ -78,19 +76,6 @@ contract VotingFactory is Ownable, IVotingFactory {
 
     function isVotingInstance(address instance) external view returns (bool) {
         return mVotingInstances[instance];
-    }
-    
-    
-    function setMasterVoting(address _newMasterVoting) external override onlyOwner {
-        require(_newMasterVoting != address(0), 'Address == address(0)');
-        emit SetMasterVoting(masterVoting, _newMasterVoting);
-        masterVoting = _newMasterVoting;
-    }
-
-    function setAdminRole(address _newAdmin) external override onlyOwner {
-        require(_newAdmin != address(0), 'Address == address(0)');
-        require(!hasRole(DEFAULT_ADMIN_ROLE, _newAdmin), 'Same address');
-        _setupRole(DEFAULT_ADMIN_ROLE, _newAdmin);
     }
 
     function _mulDiv(

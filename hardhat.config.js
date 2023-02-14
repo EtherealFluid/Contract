@@ -8,7 +8,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: `https://bsc-dataseed2.ninicoin.io/`,
+        url: `https://endpoints.omniatech.io/v1/eth/goerli/public`,
       },
       initialBaseFeePerGas: 0,
       gasPrice: 1,

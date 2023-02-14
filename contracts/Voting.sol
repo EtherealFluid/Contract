@@ -4,14 +4,14 @@ pragma solidity ^0.8.0;
 import './interfaces/IVotingFactory.sol';
 import './interfaces/IVotingInitialize.sol';
 import './interfaces/IICHOR.sol';
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
+
 
 //import './interfaces/UnicornToken.sol';
 
 /// @title Voting contract
-contract Voting is IVotingInitialize {
-
-    using SafeMathUpgradeable for uint256;
-
+contract Voting is IVotingInitialize, Initializable, ContextUpgradeable {
     struct ballot {
         address voterAddress;
         bool choice;
@@ -58,7 +58,7 @@ contract Voting is IVotingInitialize {
     }
 
     modifier tokenHoldersOnly() {
-        require(IICHOR.balanceOf(_msgSender()) >= 50 * 10 ^ 9, 'Not enough voting tkn');
+        require(ichorToken.balanceOf(_msgSender()) >= 50 * 10 ^ 9, 'Not enough voting tkn');
         _;
     }
 
@@ -84,8 +84,8 @@ contract Voting is IVotingInitialize {
         Params memory _params,
         address _applicant,
         address _ichorTokenAddress
+        
     ) public virtual override initializer {
-        VotingToken.initialize();
         //factory = IVotingFactory(_msgSender());
         params = _params;
         //TODO COPY INSTANCE IMPLEMENTATION TO ALL CONTRACTS
@@ -142,15 +142,15 @@ contract Voting is IVotingInitialize {
     }
 
     function finishVoting() external votingIsOver votingResultNotCompleted {
-        resultCompleted = true;
+       /*  resultCompleted = true;
         (uint256 _for, uint256 _against, uint256 _total) = getStats();
         if (_total >= params.minQtyVoters && _for > _against) {
-            if (params.votingType == UNICORN) {
+            if (params.votingType == "UNICORN") {
                 //TODO set suggested addres unicorn
-            } else if (params.votingType == CHARITY) {
+            } else if (params.votingType == "CHARITY") {
                 IICHOR.setCharityAddress(applicant);
             }
-        }
+        } */
     }
 
     function getVotingResults () external votingIsOver {

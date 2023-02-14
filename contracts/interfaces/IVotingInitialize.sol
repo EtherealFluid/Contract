@@ -9,13 +9,12 @@ interface IVotingInitialize {
         uint256 qtyVoters;
         uint256 minPercentageVoters;
         uint256 minQtyVoters;
-        uint256 buyVotingTokenRate;
         uint256 duration;
     }
 
     function initialize(
         Params memory _params,
         address _rptSaleContract,
-        IERC20Upgradeable _rptToken
+        address _rptToken
     ) external;
 }
