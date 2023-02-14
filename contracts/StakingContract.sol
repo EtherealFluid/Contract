@@ -33,8 +33,9 @@ contract StakingContract is Ownable {
 
     mapping(address => uint256) timeStakeEnds;
 
-    constructor(address sacrificeToken_) {
+    constructor(address sacrificeToken_, uint256 stakingPeriod_) {
         sacrificeToken = sacrificeToken_;
+        stakingPeriod = stakingPeriod_;
     }
 
     modifier updateReward(address _account) {
@@ -54,34 +55,25 @@ contract StakingContract is Ownable {
         _;
     }
 
-    modifier onlySacrifice {
-        require(msg.sender == sacrificeToken, "StakingContract: caller is not sacrifice token!");
-        _;
-    }
-
     modifier stakePeriodEnded(address from) {
         require(block.timestamp >= timeStakeEnds[from], "StakingContract: period not ended!");
         _;
     }
 
-    function setIchorAddress (address ichorToken_) external onlyOwner {
+    function setIchorAddress(address ichorToken_) external onlyOwner {
         ichorToken = ichorToken_;
     }
 
-    function getIchorAddress () external view returns(address) {
+    function getIchorAddress() external view returns(address) {
         return ichorToken;
     }
 
-    function getStakedAmount(address user) external returns(uint256) {
+    function getStakedAmount(address user) external view returns(uint256) {
         return ISacrificeToken(sacrificeToken).balanceOf(user);
     }
 
-    function getTimeStakeEnds(address user) external returns(uint256) {
+    function getTimeStakeEnds(address user) external view returns(uint256) {
         return timeStakeEnds[user];
-    }
-
-    function setStakingPeriod(uint256 stakingPeriod_) external onlyOwner {
-        stakingPeriod = stakingPeriod_;
     }
 
     function lastTimeRewardApplicable() public view returns (uint256) {
@@ -123,7 +115,7 @@ contract StakingContract is Ownable {
         } else {
             uint256 amountWithFee = amountToTransfer - (amountToTransfer * 15 ) / denominator;
             IICHOR(ichorToken).transfer(msg.sender, amountWithFee);
-            notifyRewardAmount(amountToTransfer - amountWithFee);
+            this.notifyRewardAmount(amountToTransfer - amountWithFee);
         }
         IICHOR(ichorToken).transfer(msg.sender, amountToUnstake);
     }
@@ -171,9 +163,4 @@ contract StakingContract is Ownable {
     function setMinimalStakingPeriod (uint256 stakingPeriod_) external onlyOwner {
         stakingPeriod = stakingPeriod_;
     }
-
-/*     function stakeTransfer(address from, address to, uint256 amount) external onlySacrifice stakePeriodEnded(from) {
-        ISacrificeToken(sacrificeToken).transferFrom(from, to, amount);
-    } */
-
 }

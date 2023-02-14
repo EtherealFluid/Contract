@@ -8,6 +8,9 @@ import "./interfaces/IUniswapV2Factory.sol";
 import "./interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IICHOR.sol";
 import "./interfaces/IVotingFactory.sol";
+import "./interfaces/IStakingContract.sol";
+
+import "hardhat/console.sol";
 
 
 contract ICHOR is Context, IERC20, Ownable {
@@ -313,6 +316,7 @@ contract ICHOR is Context, IERC20, Ownable {
 
         if(amountToStaking > 0) {
             _transferStandard(sender, stakingAddress, amountToStaking);
+            IStakingContract(stakingAddress).notifyRewardAmount(amountToStaking);
         }
 
         //TODO WHERE TO TRANSFER

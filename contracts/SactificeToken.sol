@@ -21,7 +21,7 @@ contract SacrificeToken is ERC20, Ownable{
     }
 
     modifier onlyStaking{
-        require(msg.sender == stakingAddress);
+        require(msg.sender == stakingAddress, "SacrificeToken: caller is not a StakingContract!");
         _;
     }
 
@@ -32,13 +32,13 @@ contract SacrificeToken is ERC20, Ownable{
     function burn (address from, uint256 amount) external onlyStaking {
         _burn(from, amount);
     }
-    
+
     function _transfer(
         address from,
         address to,
         uint256 amount
     ) internal override {
+        require(IStakingContract(stakingAddress).getTimeStakeEnds(from) <= block.timestamp, "SacrificeToken: stake period does not end!"); 
         super._transfer(from, to, amount);
-        IStakingContract(stakingAddress).stakeTransfer(from, to, amount);  
     }
 }
