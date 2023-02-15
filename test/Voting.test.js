@@ -1,9 +1,12 @@
 const {ethers} = require("hardhat");
 const {assert, expect} = require("chai");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
+var {keccak256} = require("@ethersproject/keccak256");
+var {toUtf8Bytes} = require("@ethersproject/strings");
 
 
-describe("SacrificeToken", () => {
+
+describe("ICHOR", () => {
 
     const increaseTime = async (time) => {
         await ethers.provider.send("evm_increaseTime", [time])
@@ -56,16 +59,51 @@ describe("SacrificeToken", () => {
         await unicornRewards.setIchorAddress(ichor.address);
         await unicornRewards.setUnicornToken(unicornToken.address);
     });
+
+    async function settings() {
+        await ichor.excludeFromFee(staking.address)
+
+        await ichor.transfer(acc1.address, "100000000000")
+        await ichor.transfer(acc2.address, "100000000000")
+        await ichor.transfer(staking.address, "100000000000")
+
+        await ichor.connect(acc1).approve(staking.address, "100000000000")
+        await ichor.connect(acc2).approve(staking.address, "100000000000")
+    }
     
     describe("Tests", function () {
-        describe("Reverts", function () {
-            it("Sould revert mint with SacrificeToken: caller is not a StakingContract!", async () => {
-                await expect(sacrifice.connect(acc1).mint(acc1.address, 50)).to.be.revertedWith("SacrificeToken: caller is not a StakingContract!")
+        describe("Voting", function () {
+            it("Sould setIchorAddress", async () => {
+                expect(await vFactory.getIchorAddress()).to.be.equal(ichor.address)
+                await vFactory.setIchorAddress(acc2.address)
+                expect(await vFactory.getIchorAddress()).to.be.equal(acc2.address)
             });
 
-            it("Sould revert burn with SacrificeToken: caller is not a StakingContract!", async () => {
-                await expect(sacrifice.connect(acc1).burn(acc1.address, 50)).to.be.revertedWith("SacrificeToken: caller is not a StakingContract!")
+            it("Sould create Voting", async () => {
+                expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
+                let votingType = 1
+                let desctiption = keccak256(toUtf8Bytes("Description"));
+                let duration = 100
+                let amountOfVoters = 100
+                let percantage = 50
+                let applicant = acc3.address
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
+                
+                const receipt = await transactionReceipt.wait()
+                //console.log(receipt.logs)
+                //console.log(receipt.events[0].args.instanceAddress.toString())
+
+                let votingInstance = receipt.events[0].args.instanceAddress.toString()
+               
+                expect(await vFactory.getVotingInstancesLength()).to.be.equal(1)
+                expect(await vFactory.isVotingInstance(votingInstance)).to.be.true
+            });
+        })
+
+        describe("Reverts", function () {
+            it("Sould revert setIchorAddress with", async () => {
+                
             });
         })
     })
-}) 
+})

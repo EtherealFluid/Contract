@@ -5,6 +5,7 @@ import '@openzeppelin/contracts/proxy/Clones.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import './Voting.sol';
 import './interfaces/IVotingFactory.sol';
+import './interfaces/IUnicornToken.sol';
 
 contract VotingFactory is Ownable, IVotingFactory {
     struct votingInstance {
@@ -17,6 +18,7 @@ contract VotingFactory is Ownable, IVotingFactory {
     votingInstance[] public votingInstances;
 
     IICHOR public ichorToken; 
+    IUnicornToken public unicornToken;
 
     mapping (address => bool) mVotingInstances;
 
@@ -38,6 +40,14 @@ contract VotingFactory is Ownable, IVotingFactory {
         return address(ichorToken);
     }
 
+    function setUnicornToken (address unicornToken_) external onlyOwner {
+        unicornToken = IUnicornToken(unicornToken_);
+    }
+
+    function getUnicornToken () external view returns(address) {
+        return address(unicornToken);
+    }
+
     function createVoting(
         VotingVariants _typeVoting,
         bytes memory _voteDescription,
@@ -50,7 +60,6 @@ contract VotingFactory is Ownable, IVotingFactory {
         require(_qtyVoters > 0, 'QtyVoters must be greater than zero');
         require(_minPercentageVoters > 0, 'Percentage must be greater than zero');
 
-        //TODO IS THERE FEE TO CREATE A VOTING?
         address instance;
         instance = Clones.clone(masterVoting);
         IVotingInitialize(instance).initialize(

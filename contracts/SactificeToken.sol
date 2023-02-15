@@ -10,14 +10,8 @@ contract SacrificeToken is ERC20, Ownable{
 
     address private stakingAddress;
 
-    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {}
-
-    function setStakingAddress (address stakingAddress_) external onlyOwner {
+    constructor(string memory name_, string memory symbol_, address stakingAddress_) ERC20(name_, symbol_) {
         stakingAddress = stakingAddress_;
-    }
-
-    function getStakingAddress () external view returns(address) {
-        return stakingAddress;
     }
 
     modifier onlyStaking{

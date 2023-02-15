@@ -9,6 +9,7 @@ import "./interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IICHOR.sol";
 import "./interfaces/IVotingFactory.sol";
 import "./interfaces/IStakingContract.sol";
+import './interfaces/IUnicornRewards.sol';
 
 import "hardhat/console.sol";
 
@@ -33,6 +34,8 @@ contract ICHOR is Context, IERC20, Ownable {
     string private constant _name = "Ethereal Fluid";
     string private constant _symbol = "ICHOR";
     uint8 private constant _decimals = 9;
+
+    address unicornRewards;
     
     IUniswapV2Router02 public uniswapV2Router;
     address public uniswapV2Pair;
@@ -73,6 +76,7 @@ contract ICHOR is Context, IERC20, Ownable {
         address charity, 
         address _votingFactoryAddress, 
         address _stakingAddress,
+        address _unicornRewards,
         address projectWallet
     ) {
         uniswapV2Router = IUniswapV2Router02(_uniswapV2Router);
@@ -81,7 +85,8 @@ contract ICHOR is Context, IERC20, Ownable {
         _isExcludedFromFee[owner()] = true;
         _isExcludedFromFee[address(this)] = true;
         _isExcludedFromFee[_projectWallet] = true;
-        _projectWallet = payable(projectWallet); //TODO REMOVE
+        _projectWallet = payable(projectWallet); //TODO REMOV
+        unicornRewards = _unicornRewards;
         emit Transfer(address(0), _msgSender(), _tTotal);
 
         oldIchorAddress = _oldIchorAddress;
@@ -299,6 +304,7 @@ contract ICHOR is Context, IERC20, Ownable {
     }
 
     function _transferStandard(address sender, address recipient, uint256 tAmount) private {
+        require(balanceOf(sender) >= tAmount, "ICHOR: insufficient balance!");
         _rOwned[sender] = _rOwned[sender].sub(tAmount);
         _rOwned[recipient] = _rOwned[recipient].add(tAmount);
         emit Transfer(sender, recipient, tAmount);
@@ -321,7 +327,8 @@ contract ICHOR is Context, IERC20, Ownable {
 
         //TODO WHERE TO TRANSFER
         if(amountToUnicorns > 0) {
-           // _transferStandard(sender, amountToUnicorns);
+           _transferStandard(sender, unicornRewards, amountToUnicorns);
+           IUnicornRewards(unicornRewards).notifyRewardAmount(amountToUnicorns);
         }
         //uint256 tokensForProject = amount.mul(pjctFee).div(100);
         /* if(tokensForProject > 0) {
