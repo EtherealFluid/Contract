@@ -17,25 +17,29 @@ describe("ICHOR", () => {
     }
 
     beforeEach(async () => {
-        [owner, acc1, acc2, acc3, acc4, mockStaking, charity, projectWallet, voting] = await ethers.getSigners();
+        [owner, acc1, acc2, acc3, acc4, mockStaking, charity, voting, acc5] = await ethers.getSigners();
 
         const StakingTx = await ethers.getContractFactory("StakingContract");
         staking = await StakingTx.deploy("100");
 
-        const VotingFactoryTx = await ethers.getContractFactory("VotingFactory");
-        vFactory = await VotingFactoryTx.deploy();
+/*         const VotingFactoryTx = await ethers.getContractFactory("VotingFactory");
+        vFactory = await VotingFactoryTx.deploy(); */
+
+        const mockVotingFactoryTx = await ethers.getContractFactory("mockVotingFactory");
+        vFactory = await mockVotingFactoryTx.deploy(voting.address);
+
 
         const UnicornRewardsx = await ethers.getContractFactory("UnicornRewards");
         unicornRewards = await UnicornRewardsx.deploy();
 
         const UnicornTokenx = await ethers.getContractFactory("UnicornToken");
-        unicornToken = await UnicornTokenx.deploy("Unicorn", "UT", voting.address, unicornRewards.address);
+        unicornToken = await UnicornTokenx.deploy("Unicorn", "UT", vFactory.address, unicornRewards.address);
 
         uniswapV2Router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
         oldIchorAddress = "0x2A552CE0738F298d901ADF2ECecCCC73493347ab"
 
         const ICHORTx = await ethers.getContractFactory("ICHOR");
-        ichor = await ICHORTx.deploy(uniswapV2Router, oldIchorAddress, charity.address, voting.address, staking.address, unicornRewards.address, projectWallet.address);
+        ichor = await ICHORTx.deploy(uniswapV2Router, oldIchorAddress, charity.address, vFactory.address, staking.address, unicornRewards.address);
 
         const name = "SactificeToken";
         const symbol = "ST";
@@ -49,12 +53,15 @@ describe("ICHOR", () => {
         await staking.setSacrificeToken(sacrifice.address);
 
         //VotingFactory
-        await vFactory.setIchorAddress(ichor.address);
-        await vFactory.setUnicornToken(unicornToken.address);
+        //await vFactory.setIchorAddress(ichor.address);
+        //await vFactory.setUnicornToken(unicornToken.address);
 
         //UnicornRewards
         await unicornRewards.setIchorAddress(ichor.address);
         await unicornRewards.setUnicornToken(unicornToken.address);
+        
+        //UnicornToken
+        await unicornToken.init(owner.address);
     });
     
     async function settings() {
@@ -66,45 +73,61 @@ describe("ICHOR", () => {
     
     describe("Tests", function () {
         describe("Unicorn", function () {
+            it("Should getIchorAddress", async () => {
+                expect(await unicornRewards.getIchorAddress()).to.be.equal(ichor.address)
+            });
+
+            it("Should getUnicornToken ", async () => {
+                expect(await unicornRewards.getUnicornToken ()).to.be.equal(unicornToken.address)
+            });
+
             it("Should mint unicornStatus only once", async () => {
                 expect(await unicornToken.getIsUnicorn(acc1.address)).to.be.false
-                let expected = []
+                let expected = [owner.address]
                 expect((await unicornToken.getAllUnicorns()).toString()).to.be.equal(expected.toString())
-                expect(await unicornToken.getUnicornsLength()).to.be.equal(0)
+                expect(await unicornToken.getUnicornsLength()).to.be.equal(1)
                 
                 await unicornToken.connect(voting).mint(acc1.address)
                 await expect(unicornToken.connect(voting).mint(acc1.address)).to.be.revertedWith("UnicornToken: already Unicorn!")
                 
                 expect(await unicornToken.getIsUnicorn(acc1.address)).to.be.true
-                expected = [acc1.address]
+                expected = [owner.address, acc1.address]
                 expect((await unicornToken.getAllUnicorns()).toString()).to.be.equal(expected.toString())
-                expect(await unicornToken.getUnicornsLength()).to.be.equal(1)
+                expect(await unicornToken.getUnicornsLength()).to.be.equal(2)
             });
 
             it("Should burn unicornStatus only once", async () => {
                 expect(await unicornToken.getIsUnicorn(acc1.address)).to.be.false
-                let expected = []
+                let expected = [owner.address]
                 expect((await unicornToken.getAllUnicorns()).toString()).to.be.equal(expected.toString())
-                expect(await unicornToken.getUnicornsLength()).to.be.equal(0)
+                expect(await unicornToken.getUnicornsLength()).to.be.equal(1)
                 
                 await unicornToken.connect(voting).mint(acc1.address)
                 
                 expect(await unicornToken.getIsUnicorn(acc1.address)).to.be.true
-                expected = [acc1.address]
+                expected = [owner.address, acc1.address]
                 expect((await unicornToken.getAllUnicorns()).toString()).to.be.equal(expected.toString())
-                expect(await unicornToken.getUnicornsLength()).to.be.equal(1)
+                expect(await unicornToken.getUnicornsLength()).to.be.equal(2)
 
                 await unicornToken.connect(voting).burn(acc1.address)
                 await expect(unicornToken.connect(voting).burn(acc1.address)).to.be.revertedWith("UnicornToken: user is not a Unicorn!")
                 
                 expect(await unicornToken.getIsUnicorn(acc1.address)).to.be.false
-                expected = []
+                expected = [owner.address]
                 expect((await unicornToken.getAllUnicorns()).toString()).to.be.equal(expected.toString())
-                expect(await unicornToken.getUnicornsLength()).to.be.equal(0)
+                expect(await unicornToken.getUnicornsLength()).to.be.equal(1)
             });
         })
 
         describe("Reverts", function () {
+            it("Should revert setIchorAddress with Ownable: caller is not the owner", async () => {
+                await expect(unicornRewards.connect(acc2).setIchorAddress(acc1.address)).to.be.revertedWith("Ownable: caller is not the owner")
+            });
+
+            it("Should revert setUnicornToken with Ownable: caller is not the owner", async () => {
+                await expect(unicornRewards.connect(acc2).setUnicornToken(acc1.address)).to.be.revertedWith("Ownable: caller is not the owner")
+            });
+
             it("Should revert mint with UnicornToken: caller in not a Voting!", async () => {
                 await expect(unicornToken.connect(acc2).mint(acc1.address)).to.be.revertedWith("UnicornToken: caller in not a Voting!")
             });
@@ -145,7 +168,7 @@ describe("ICHOR", () => {
                 let amount = "10000000000000"
                 let balanceBeforeAcc1 = await ichor.balanceOf(acc1.address)
                 let balanceBeforeAcc2 = await ichor.balanceOf(acc2.address)
-                let usersAmount = 2
+                let usersAmount = 3
 
                 let expectedFeeAmount = (amount  * 4) /100
                 let expectedAmountToUnicorns = ((expectedFeeAmount * 50 / 100) * 15) / 100
@@ -169,7 +192,7 @@ describe("ICHOR", () => {
 
                 let amount = "10000000000000"
                 
-                let usersAmount = 2
+                let usersAmount = 3
 
                 let expectedFeeAmount = (amount  * 4) /100
                 let expectedAmountToUnicorns = ((expectedFeeAmount * 50 / 100) * 15) / 100
@@ -212,23 +235,35 @@ describe("ICHOR", () => {
                 expect(await ichor.balanceOf(acc2.address)).to.be.equal(balanceBeforeAcc2)
             });
 
-            //TODO
             it("Should distribute unequal rewards", async () => {
                 await settings()
 
-                await unicornToken.connect(voting).mint(acc1.address)
-                await unicornToken.connect(voting).mint(acc2.address)
+                await unicornToken.connect(voting).mint(acc3.address)
+                await unicornToken.connect(voting).mint(acc4.address)
+                await unicornToken.connect(voting).mint(acc5.address)
+
+                let amount = "6666"
+
+                let usersAmount = 4
+
+                let expectedFeeAmount = (amount  * 4) /100
+                let expectedAmountToUnicorns = ((expectedFeeAmount * 50 / 100) * 15) / 100
+            
+                let expectedAmountToAcc3 = expectedAmountToUnicorns / usersAmount
+                let expectedAmountToAcc4 = expectedAmountToUnicorns / usersAmount
+                let expectedAmountToAcc5 = expectedAmountToUnicorns / usersAmount
+
+                await ichor.connect(acc1).transfer(acc2.address, amount)
 
                 await increaseTime(10)
 
-                let balanceBeforeAcc1 = await ichor.balanceOf(acc1.address)
-                let balanceBeforeAcc2 = await ichor.balanceOf(acc2.address)
+                await unicornRewards.connect(acc3).getReward()
+                await unicornRewards.connect(acc4).getReward()
+                await unicornRewards.connect(acc5).getReward()
 
-                await unicornRewards.connect(acc1).getReward()
-                await unicornRewards.connect(acc2).getReward()
-
-                expect(await ichor.balanceOf(acc1.address)).to.be.equal(balanceBeforeAcc1)
-                expect(await ichor.balanceOf(acc2.address)).to.be.equal(balanceBeforeAcc2)
+                expect(await ichor.balanceOf(acc3.address)).to.be.equal(Math.round(expectedAmountToAcc3))
+                expect(await ichor.balanceOf(acc4.address)).to.be.equal(Math.round(expectedAmountToAcc4))
+                expect(await ichor.balanceOf(acc5.address)).to.be.equal(Math.round(expectedAmountToAcc5))
             });
 
         })

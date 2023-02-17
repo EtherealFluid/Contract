@@ -17,7 +17,7 @@ describe("SacrificeToken", () => {
     }
 
     beforeEach(async () => {
-        [owner, acc1, acc2, acc3, acc4, mockStaking, charity, projectWallet] = await ethers.getSigners();
+        [owner, acc1, acc2, acc3, acc4, mockStaking, charity] = await ethers.getSigners();
 
         const StakingTx = await ethers.getContractFactory("StakingContract");
         staking = await StakingTx.deploy("100");
@@ -35,7 +35,7 @@ describe("SacrificeToken", () => {
         oldIchorAddress = "0x2A552CE0738F298d901ADF2ECecCCC73493347ab"
 
         const ICHORTx = await ethers.getContractFactory("ICHOR");
-        ichor = await ICHORTx.deploy(uniswapV2Router, oldIchorAddress, charity.address, vFactory.address, staking.address, unicornRewards.address, projectWallet.address);
+        ichor = await ICHORTx.deploy(uniswapV2Router, oldIchorAddress, charity.address, vFactory.address, staking.address, unicornRewards.address);
 
         const name = "SactificeToken";
         const symbol = "ST";
@@ -55,6 +55,9 @@ describe("SacrificeToken", () => {
         //UnicornRewards
         await unicornRewards.setIchorAddress(ichor.address);
         await unicornRewards.setUnicornToken(unicornToken.address);
+        
+        //UnicornToken
+        await unicornToken.init(owner.address);
     });
     
     describe("Tests", function () {

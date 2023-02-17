@@ -22,8 +22,6 @@ contract ICHOR is Context, IERC20, Ownable {
     mapping (address => bool) private bots;
     mapping (address => uint256) private cooldown;
     uint256 private constant _tTotal = 1e10 * 10**9;
-    
-    address payable private _projectWallet;
 
     address private _charity;
 
@@ -42,7 +40,7 @@ contract ICHOR is Context, IERC20, Ownable {
     bool private tradingOpen;
     bool private swapping;
     bool private inSwap = false;
-    bool private swapEnabled = false;
+    //bool private swapEnabled = false;
     bool private cooldownEnabled = false;
     uint256 private tradingActiveBlock = 0; // 0 means trading is not active
     uint256 private blocksToBlacklist = 9;
@@ -76,16 +74,13 @@ contract ICHOR is Context, IERC20, Ownable {
         address charity, 
         address _votingFactoryAddress, 
         address _stakingAddress,
-        address _unicornRewards,
-        address projectWallet
+        address _unicornRewards
     ) {
         uniswapV2Router = IUniswapV2Router02(_uniswapV2Router);
 
         _rOwned[_msgSender()] = _tTotal;
         _isExcludedFromFee[owner()] = true;
         _isExcludedFromFee[address(this)] = true;
-        _isExcludedFromFee[_projectWallet] = true;
-        _projectWallet = payable(projectWallet); //TODO REMOV
         unicornRewards = _unicornRewards;
         emit Transfer(address(0), _msgSender(), _tTotal);
 
@@ -143,12 +138,8 @@ contract ICHOR is Context, IERC20, Ownable {
         _charity = charity;
     }
 
-    function getCharityAddress() external returns (address) {
+    function getCharityAddress() external view returns (address) {
         return _charity;
-    }
-
-    function setSwapEnabled(bool onoff) external onlyOwner(){
-        swapEnabled = onoff;
     }
 
     function _approve(address owner, address spender, uint256 amount) private {
@@ -163,7 +154,6 @@ contract ICHOR is Context, IERC20, Ownable {
         require(to != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
         bool takeFee = true;
-        bool shouldSwap = false;
         if (from != owner() && to != owner() && to != address(0) && to != address(0xdead) && !swapping) {
             require(!bots[from] && !bots[to]);
 
@@ -173,57 +163,13 @@ contract ICHOR is Context, IERC20, Ownable {
                 require(cooldown[to] < block.timestamp);
                 cooldown[to] = block.timestamp + (30 seconds);
             }
-            
-            if (to == uniswapV2Pair && from != address(uniswapV2Router) && !_isExcludedFromFee[from] && cooldownEnabled) {
-                require(amount <= _maxSellAmount, "Transfer amount exceeds the maxSellAmount.");
-                shouldSwap = true;
-            }
         }
 
         if(_isExcludedFromFee[from] || _isExcludedFromFee[to]) {
             takeFee = false;
         }
 
-        uint256 contractTokenBalance = balanceOf(address(this));
-        bool canSwap = (contractTokenBalance > swapTokensAtAmount) && shouldSwap;
-
-        if (canSwap && swapEnabled && !swapping && !_isExcludedFromFee[from] && !_isExcludedFromFee[to]) {
-            swapping = true;
-            swapBack();
-            swapping = false;
-        }
-
         _tokenTransfer(from, to, amount, takeFee);
-    }
-
-    function swapBack() private {
-        uint256 tokensForProject = balanceOf(address(this));
-        
-        bool success;
-        
-        if(tokensForProject == 0) {return;}
-
-        if(tokensForProject > swapTokensAtAmount * 10) {
-            tokensForProject = swapTokensAtAmount * 10;
-        }
-                
-        uint256 initialETHBalance = address(this).balance;
-
-        swapTokensForEth(tokensForProject); 
-                              
-        (success,) = address(_projectWallet).call{value: address(this).balance - initialETHBalance}("");
-    }
-
-    //TODO TEST method
-    function migrateTokens(
-        uint256 amount
-    ) external {
-        require(balanceOf(migrationPayer) >= amount, "ICHOR: cant pay now!");
-        require(!hasClaimed[msg.sender], "ICHOR: tokens already claimed!");
-        require(IICHOR(oldIchorAddress).balanceOf(msg.sender) >= amount, "ICHOR: insufficient amount!");
-        hasClaimed[msg.sender] = true;
-        _transferStandard(migrationPayer, msg.sender, amount);
-        emit TokensMigrated(msg.sender, amount);
     }
 
     function swapTokensForEth(uint256 tokenAmount) private lockTheSwap {
@@ -239,13 +185,23 @@ contract ICHOR is Context, IERC20, Ownable {
             block.timestamp
         );
     }
+
+      function migrateTokens(
+        uint256 amount
+    ) external {
+        require(balanceOf(migrationPayer) >= amount, "ICHOR: cant pay now!");
+        require(!hasClaimed[msg.sender], "ICHOR: tokens already claimed!");
+        require(IICHOR(oldIchorAddress).balanceOf(msg.sender) >= amount, "ICHOR: insufficient amount!");
+        hasClaimed[msg.sender] = true;
+        _transferStandard(migrationPayer, msg.sender, amount);
+        emit TokensMigrated(msg.sender, amount);
+    }
        
     function openTrading() external onlyOwner() {
         require(!tradingOpen,"trading is already open");        
         _approve(address(this), address(uniswapV2Router), _tTotal);
         uniswapV2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
         uniswapV2Router.addLiquidityETH{value: address(this).balance}(address(this),balanceOf(address(this)),0,0,owner(),block.timestamp);
-        swapEnabled = true;
         cooldownEnabled = true;
         _maxBuyAmount = 5e7 * 10**9;
         _maxSellAmount = 5e7 * 10**9;
@@ -324,17 +280,11 @@ contract ICHOR is Context, IERC20, Ownable {
             _transferStandard(sender, stakingAddress, amountToStaking);
             IStakingContract(stakingAddress).notifyRewardAmount(amountToStaking);
         }
-
-        //TODO WHERE TO TRANSFER
+        
         if(amountToUnicorns > 0) {
            _transferStandard(sender, unicornRewards, amountToUnicorns);
            IUnicornRewards(unicornRewards).notifyRewardAmount(amountToUnicorns);
-        }
-        //uint256 tokensForProject = amount.mul(pjctFee).div(100);
-        /* if(tokensForProject > 0) {
-            _transferStandard(sender, address(this), tokensForProject);
-        } */
-            
+        }   
         return amount -= totalFeeAmount;
     }
 

@@ -10,4 +10,6 @@ interface IUnicornToken {
     function mint(address to) external;
  
     function burn(address from) external;
+
+    function init(address user) external;
 }

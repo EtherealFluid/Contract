@@ -2,16 +2,19 @@
 pragma solidity ^0.8.0;
 
 import './interfaces/IVotingFactory.sol';
-import './interfaces/IVotingInitialize.sol';
+//import './interfaces/IVotingInitialize.sol';
 import './interfaces/IICHOR.sol';
+import './interfaces/IVoting.sol';
+import "./interfaces/IUnicornToken.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
+import "./interfaces/IVotingInitialize.sol";
 
 
 //import './interfaces/UnicornToken.sol';
 
 /// @title Voting contract
-contract Voting is IVotingInitialize, Initializable, ContextUpgradeable {
+contract Voting is Initializable, ContextUpgradeable, IVoting {
     struct ballot {
         address voterAddress;
         bool choice;
@@ -19,26 +22,31 @@ contract Voting is IVotingInitialize, Initializable, ContextUpgradeable {
     /// @dev return params Returns initialization params for Voting
     Params public params;
 
-/*     /// @return factory Returns address of VotingFactory contract
-    IVotingFactory public factory; */
-
     uint256 internal totalForVotes;
     uint256 internal totalAgainstVotes;
-    mapping(address => bool) internal mVoters;
     ballot[] internal voters;
+    mapping (address => uint256) internal balancesFor;
+    mapping (address => uint256) internal balancesAgainst;
 
     //address unicornAddress;
     IICHOR public ichorToken;
     //address ichorTokenAddress;
+    IUnicornToken public unicornToken;
 
     bool resultCompleted;
     address applicant;
+
+    uint256 totalAmountFor;
+    uint256 totalAmountAgainst;
+
+    VotingVariants votingType;
+    
     
 
     /// @notice Emitted when user votes
     /// @param voter Address of voter
     /// @param choice Voter's choice
-    event Voted(address voter, bool choice);
+    event Voted(address voter, bool choice, uint256 amount_);
 
     /// @notice Emitted when voting was successful. (If the minimum number of users votes)
     /// @param _for Amount of voters who voted "for"
@@ -53,45 +61,42 @@ contract Voting is IVotingInitialize, Initializable, ContextUpgradeable {
     event VotingFailed(uint256 _for, uint256 _against, uint256 _total);
 
     modifier votingResultNotCompleted() {
-        require(!resultCompleted, 'Voting result already completed!');
+        require(!resultCompleted, 'Voting: Voting result already completed!');
         _;
     }
 
     modifier tokenHoldersOnly() {
-        require(ichorToken.balanceOf(_msgSender()) >= 50 * 10 ^ 9, 'Not enough voting tkn');
+        require(ichorToken.balanceOf(_msgSender()) > 0, 'Voting: Not enough ICHOR tokens!');
         _;
     }
 
     modifier votingIsOver() {
-        require(block.timestamp > params.start + params.duration, 'Voting is not over');
+        require(block.timestamp > params.start + params.duration, 'Voting: Voting is not over!');
         _;
     }
 
     modifier votingIsActive() {
         require(
             block.timestamp >= params.start && block.timestamp <= (params.start + params.duration),
-            'Voting is over'
+            'Voting: Voting is over'
         );
-        _;
-    }
-
-    modifier neverVoted() {
-        require(!mVoters[_msgSender()], 'Voting: already voted');
         _;
     }
 
     function initialize(
         Params memory _params,
         address _applicant,
-        address _ichorTokenAddress
+        address _ichorTokenAddress,
+        address _unicornToken,
+        VotingVariants _votingType
         
     ) public virtual override initializer {
-        //factory = IVotingFactory(_msgSender());
         params = _params;
-        //TODO COPY INSTANCE IMPLEMENTATION TO ALL CONTRACTS
         ichorToken = IICHOR(_ichorTokenAddress);
         resultCompleted = false;
         applicant = _applicant;
+        unicornToken = IUnicornToken(_unicornToken);
+        votingType = _votingType;
     }
 
     function getAllVoters() external view returns (address[] memory) {
@@ -102,13 +107,16 @@ contract Voting is IVotingInitialize, Initializable, ContextUpgradeable {
         return addressVoters;
     }
 
-    function getVoterByIndex(uint256 _voterIndex) external view returns (address) {
-        require(_voterIndex < voters.length, 'Index does not exist');
-        return voters[_voterIndex].voterAddress;
-    }
-
     function getVoterCount() public view returns (uint256) {
         return voters.length;
+    }
+
+    function getbalanceVoted(address account_) external view returns (uint256) {
+        if (balancesFor[account_] > 0) {
+            return balancesFor[account_];
+        } else {
+            return balancesAgainst[account_];
+        }
     }
 
     function getStats()
@@ -120,37 +128,54 @@ contract Voting is IVotingInitialize, Initializable, ContextUpgradeable {
             uint256 _count
         )
     {
-        return (totalForVotes, totalAgainstVotes, getVoterCount());
+        return (totalAmountFor, totalAmountAgainst, getVoterCount());
     }
 
-    function voteFor() public virtual tokenHoldersOnly neverVoted votingIsActive {
+    function voteFor(uint256 amount_) public virtual tokenHoldersOnly votingIsActive {
+        require(balancesAgainst[_msgSender()] == 0, "Voting: you cant vote for two options!");
+        ichorToken.transferFrom(_msgSender(), address(this), amount_);
+        
+        if (balancesFor[_msgSender()] == 0) {
+            voters.push(ballot({voterAddress: _msgSender(), choice: true}));
+        }
+
+        uint256 amountWithFee = amount_ - ((amount_ * 4) / 100);
+
+        balancesFor[_msgSender()] += amountWithFee;
+        totalAmountFor += amountWithFee;
         totalForVotes++;
-        //_burn(_msgSender(), 1);
-        //TODO transfer tokens to??
-        voters.push(ballot({voterAddress: _msgSender(), choice: true}));
-        mVoters[_msgSender()] = true;
-        emit Voted(_msgSender(), true);
+        emit Voted(_msgSender(), true, amountWithFee);
     }
 
-    function voteAgainst() public virtual tokenHoldersOnly neverVoted votingIsActive {
+    function voteAgainst(uint256 amount_) public virtual tokenHoldersOnly votingIsActive {
+        require(balancesFor[_msgSender()] == 0, "Voting: you cant vote for two options!");
+        ichorToken.transferFrom(_msgSender(), address(this), amount_);
+        
+        if (balancesAgainst[_msgSender()] == 0) {
+            voters.push(ballot({voterAddress: _msgSender(), choice: false}));
+        }
+        uint256 amountWithFee = amount_ - ((amount_ * 4) / 100);
+
+        balancesAgainst[_msgSender()] += amountWithFee;
+        totalAmountAgainst += amountWithFee;
         totalAgainstVotes++;
-        //_burn(_msgSender(), 1);
-        //TODO transfer tokens to??
-        voters.push(ballot({voterAddress: _msgSender(), choice: false}));
-        mVoters[_msgSender()] = true;
-        emit Voted(_msgSender(), false);
+        
+        emit Voted(_msgSender(), false, amountWithFee);
     }
 
     function finishVoting() external votingIsOver votingResultNotCompleted {
-       /*  resultCompleted = true;
+        resultCompleted = true;
         (uint256 _for, uint256 _against, uint256 _total) = getStats();
-        if (_total >= params.minQtyVoters && _for > _against) {
-            if (params.votingType == "UNICORN") {
-                //TODO set suggested addres unicorn
-            } else if (params.votingType == "CHARITY") {
-                IICHOR.setCharityAddress(applicant);
+        
+        if (_total >= params.minQtyVoters) {
+            if (_for > _against) {
+                if (votingType == VotingVariants.UNICORN) {
+                    unicornToken.mint(applicant);
+                } else if (votingType == VotingVariants.CHARITY) {
+                    ichorToken.setCharityAddress(applicant);
+                }
             }
-        } */
+        }
     }
 
     function getVotingResults () external votingIsOver {
@@ -160,5 +185,16 @@ contract Voting is IVotingInitialize, Initializable, ContextUpgradeable {
         } else {
             emit VotingFailed(_for, _against, _total);
         }
+    }
+
+    function withdraw() external votingIsOver {
+        require(balancesFor[_msgSender()] > 0 || balancesAgainst[_msgSender()] > 0, "Voting: no tokens to withdraw");
+        uint256 amountToTransfer;
+        if (balancesFor[_msgSender()] > 0) {
+            amountToTransfer = balancesFor[_msgSender()];
+        } else {
+            amountToTransfer = balancesAgainst[_msgSender()];
+        }
+        ichorToken.transfer(_msgSender(), amountToTransfer);
     }
 }

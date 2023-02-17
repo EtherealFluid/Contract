@@ -6,6 +6,8 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import './Voting.sol';
 import './interfaces/IVotingFactory.sol';
 import './interfaces/IUnicornToken.sol';
+import "./interfaces/IVotingInitialize.sol";
+import "./interfaces/IVoting.sol";
 
 contract VotingFactory is Ownable, IVotingFactory {
     struct votingInstance {
@@ -23,8 +25,7 @@ contract VotingFactory is Ownable, IVotingFactory {
     mapping (address => bool) mVotingInstances;
 
     modifier onlyUnicorns() {
-        //TODO CHECK IF CALLER IS UNICORN
-        //require(, 'Caller is not an Unicorn');
+        require(unicornToken.getIsUnicorn(msg.sender), "VotingFactory: caller is not a Unicorn");
         _;
     }
 
@@ -32,19 +33,19 @@ contract VotingFactory is Ownable, IVotingFactory {
         masterVoting = address(new Voting());
     }
 
-    function setIchorAddress (address ichorToken_) external onlyOwner {
+    function setIchorAddress(address ichorToken_) external onlyOwner {
         ichorToken = IICHOR(ichorToken_);
     }
 
-    function getIchorAddress () external view returns(address) {
+    function getIchorAddress() external view returns(address) {
         return address(ichorToken);
     }
 
-    function setUnicornToken (address unicornToken_) external onlyOwner {
+    function setUnicornToken(address unicornToken_) external onlyOwner {
         unicornToken = IUnicornToken(unicornToken_);
     }
 
-    function getUnicornToken () external view returns(address) {
+    function getUnicornToken() external view returns(address) {
         return address(unicornToken);
     }
 
@@ -54,7 +55,8 @@ contract VotingFactory is Ownable, IVotingFactory {
         uint256 _duration,
         uint256 _qtyVoters,
         uint256 _minPercentageVoters,
-        address _applicant
+        address _applicant,
+        address _unicornToken
     ) external override onlyUnicorns {
         require(_duration > 0, 'VF: duration == 0');
         require(_qtyVoters > 0, 'QtyVoters must be greater than zero');
@@ -62,7 +64,7 @@ contract VotingFactory is Ownable, IVotingFactory {
 
         address instance;
         instance = Clones.clone(masterVoting);
-        IVotingInitialize(instance).initialize(
+        IVoting(instance).initialize(
             IVotingInitialize.Params({
                 description: _voteDescription,
                 start: block.timestamp,
@@ -72,7 +74,9 @@ contract VotingFactory is Ownable, IVotingFactory {
                 duration: _duration
             }),
             _applicant,
-            address(ichorToken)
+            address(ichorToken),
+            address(_unicornToken),
+            _typeVoting
         );
         votingInstances.push(votingInstance({addressInstance: instance, typeInstance: _typeVoting}));
         mVotingInstances[instance] = true;

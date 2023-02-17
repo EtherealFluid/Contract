@@ -11,6 +11,7 @@ contract UnicornToken is Ownable {
 
     string name;
     string symbol;
+    bool isInit;
     IVotingFactory public votingAddress;
     IUnicornRewards public unicornRewards;
 
@@ -22,7 +23,12 @@ contract UnicornToken is Ownable {
     event unicornStatusRemoved(address from);
 
     modifier onlyVoting() {
-        require(msg.sender == address(votingAddress), "UnicornToken: caller in not a Voting!");
+        require(votingAddress.isVotingInstance(msg.sender), "UnicornToken: caller in not a Voting!");
+        _;
+    }
+
+    modifier onlyOnce() {
+        require(!isInit, "UnicornToken: already initialized!");
         _;
     }
 
@@ -31,7 +37,15 @@ contract UnicornToken is Ownable {
         symbol = symbol_;
         votingAddress = IVotingFactory(votingAddress_);
         unicornRewards = IUnicornRewards(unicornRewards_);
-        //mint(msg.sender);
+        isInit = false;
+    }
+
+    function init(address user) external onlyOnce onlyOwner {
+        isInit = true;
+        isUnicorn[user] = true;
+        unicorns.push(user);
+        unicornRewards.stake(user);
+        emit unicornStatusGranted(user);
     }
 
     function getIsUnicorn(address user) external view returns(bool) {
@@ -46,7 +60,7 @@ contract UnicornToken is Ownable {
         return unicorns.length;
     }
  
-    function mint(address to) public onlyVoting {
+    function mint(address to) external onlyVoting {
         require(isUnicorn[to] == false, "UnicornToken: already Unicorn!");
         isUnicorn[to] = true;
         unicorns.push(to);
@@ -65,8 +79,6 @@ contract UnicornToken is Ownable {
                 break;
            } 
         }
-        
-        
         emit unicornStatusRemoved(from);
     }
 }

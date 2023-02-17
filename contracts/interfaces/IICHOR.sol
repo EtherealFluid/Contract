@@ -38,6 +38,10 @@ interface IICHOR {
 
     function setProjectWallet(address projectWallet) external;
 
+    function setCharityAddress(address charityAddress) external;
+
+    function getCharityAddress() external view returns (address charityAddress);
+
     function excludeFromFee(address account) external;
     
     function includeInFee(address account) external;

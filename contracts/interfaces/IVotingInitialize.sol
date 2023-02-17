@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
 
 interface IVotingInitialize {
+    enum VotingVariants {UNICORN, CHARITY}
+
     struct Params {
         bytes description;
         uint256 start;
@@ -11,10 +13,4 @@ interface IVotingInitialize {
         uint256 minQtyVoters;
         uint256 duration;
     }
-
-    function initialize(
-        Params memory _params,
-        address _rptSaleContract,
-        address _rptToken
-    ) external;
 }
