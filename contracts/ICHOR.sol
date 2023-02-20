@@ -40,14 +40,11 @@ contract ICHOR is Context, IERC20, Ownable {
     bool private tradingOpen;
     bool private swapping;
     bool private inSwap = false;
-    //bool private swapEnabled = false;
     bool private cooldownEnabled = false;
     uint256 private tradingActiveBlock = 0; // 0 means trading is not active
-    uint256 private blocksToBlacklist = 9;
     uint256 private _maxBuyAmount = _tTotal;
     uint256 private _maxSellAmount = _tTotal;
     uint256 private _maxWalletAmount = _tTotal;
-    uint256 private swapTokensAtAmount = 0;
 
     mapping(address => bool) public hasClaimed;
     address oldIchorAddress;
@@ -55,6 +52,7 @@ contract ICHOR is Context, IERC20, Ownable {
     
     event MaxBuyAmountUpdated(uint256 _maxBuyAmount);
     event MaxSellAmountUpdated(uint256 _maxSellAmount);
+    event MaxWalletAmountUpdated(uint256 _maxWalletAmount);
     event TokensMigrated(address _user, uint256 _amount);
     
     modifier lockTheSwap {
@@ -64,7 +62,7 @@ contract ICHOR is Context, IERC20, Ownable {
     }
 
     modifier onlyVoting {
-        require(voting.isVotingInstance(msg.sender), "ICHOR: caller is not a voting contract!");
+        require(voting.isVotingInstance(msg.sender), "ICHOR: caller is not a Voting contract!");
         _;
     }
 
@@ -74,7 +72,8 @@ contract ICHOR is Context, IERC20, Ownable {
         address charity, 
         address _votingFactoryAddress, 
         address _stakingAddress,
-        address _unicornRewards
+        address _unicornRewards,
+        address _migrationPayer
     ) {
         uniswapV2Router = IUniswapV2Router02(_uniswapV2Router);
 
@@ -88,6 +87,7 @@ contract ICHOR is Context, IERC20, Ownable {
         _charity = charity;
         voting = IVotingFactory(_votingFactoryAddress);
         stakingAddress = _stakingAddress;
+        migrationPayer = _migrationPayer;
     }
 
     function name() public pure returns (string memory) {
@@ -135,6 +135,7 @@ contract ICHOR is Context, IERC20, Ownable {
     }
 
     function setCharityAddress(address charity) external onlyVoting {
+        require(charity != address(0), "ICHOR: Charity cannot be a zero address!");
         _charity = charity;
     }
 
@@ -158,8 +159,8 @@ contract ICHOR is Context, IERC20, Ownable {
             require(!bots[from] && !bots[to]);
 
             if (from == uniswapV2Pair && to != address(uniswapV2Router) && !_isExcludedFromFee[to] && cooldownEnabled) {
-                require(amount <= _maxBuyAmount, "Transfer amount exceeds the maxBuyAmount.");
-                require(balanceOf(to) + amount <= _maxWalletAmount, "Exceeds maximum wallet token amount.");
+                require(amount <= _maxBuyAmount, "ICHOR: Transfer amount exceeds the maxBuyAmount!");
+                require(balanceOf(to) + amount <= _maxWalletAmount, "ICHOR: Exceeds maximum wallet token amount!");
                 require(cooldown[to] < block.timestamp);
                 cooldown[to] = block.timestamp + (30 seconds);
             }
@@ -186,12 +187,10 @@ contract ICHOR is Context, IERC20, Ownable {
         );
     }
 
-      function migrateTokens(
-        uint256 amount
-    ) external {
+      function migrateTokens() external {
+        uint256 amount = IICHOR(oldIchorAddress).balanceOf(msg.sender);
         require(balanceOf(migrationPayer) >= amount, "ICHOR: cant pay now!");
         require(!hasClaimed[msg.sender], "ICHOR: tokens already claimed!");
-        require(IICHOR(oldIchorAddress).balanceOf(msg.sender) >= amount, "ICHOR: insufficient amount!");
         hasClaimed[msg.sender] = true;
         _transferStandard(migrationPayer, msg.sender, amount);
         emit TokensMigrated(msg.sender, amount);
@@ -202,11 +201,12 @@ contract ICHOR is Context, IERC20, Ownable {
         _approve(address(this), address(uniswapV2Router), _tTotal);
         uniswapV2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
         uniswapV2Router.addLiquidityETH{value: address(this).balance}(address(this),balanceOf(address(this)),0,0,owner(),block.timestamp);
+
         cooldownEnabled = true;
         _maxBuyAmount = 5e7 * 10**9;
         _maxSellAmount = 5e7 * 10**9;
         _maxWalletAmount = 1e8 * 10**9;
-        swapTokensAtAmount = 5e6 * 10**9;
+        //swapTokensAtAmount = 5e6 * 10**9;
         tradingOpen = true;
         tradingActiveBlock = block.number;
         IERC20(uniswapV2Pair).approve(address(uniswapV2Router), type(uint256).max);
@@ -220,32 +220,24 @@ contract ICHOR is Context, IERC20, Ownable {
 
     function setMaxBuyAmount(uint256 maxBuy) public onlyOwner {
         _maxBuyAmount = maxBuy;
+        emit MaxBuyAmountUpdated(_maxBuyAmount);
     }
 
     function setMaxSellAmount(uint256 maxSell) public onlyOwner {
         _maxSellAmount = maxSell;
+        emit MaxSellAmountUpdated(_maxSellAmount);
     }
     
     function setMaxWalletAmount(uint256 maxToken) public onlyOwner {
         _maxWalletAmount = maxToken;
+        emit MaxWalletAmountUpdated(_maxWalletAmount);
     }
-
-    function setSwapTokensAtAmount(uint256 newAmount) public onlyOwner {
-        require(newAmount >= 1e3 * 10**9, "Swap amount cannot be lower than 0.001% total supply.");
-        require(newAmount <= 5e6 * 10**9, "Swap amount cannot be higher than 0.5% total supply.");
-        swapTokensAtAmount = newAmount;
-    }
-
     function excludeFromFee(address account) public onlyOwner {
         _isExcludedFromFee[account] = true;
     }
     
     function includeInFee(address account) public onlyOwner {
         _isExcludedFromFee[account] = false;
-    }
-
-    function setBlocksToBlacklist(uint256 blocks) public onlyOwner {
-        blocksToBlacklist = blocks;
     }
 
     function delBot(address notbot) public onlyOwner {
