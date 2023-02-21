@@ -215,3 +215,15 @@ Owner can:
 
 - set Unicorn token address.
 - set ICHOR token address.
+
+
+#### Test cases
+
+1) After the transfer of the token, the reward must be distributed in accordance with the RQ. (***transfer*** method)
+ - Current charity address: 0xa842a38CD758f8dE8537C5CBcB2006DB0250eC7C
+ - First Unicorn token holder: 0xa842a38CD758f8dE8537C5CBcB2006DB0250eC7C
+ - No tokens staked for now.
+
+2) You can stake ICHOR tokens to recieve Sacrifice Tokens and earning rewards. (***stake*** method)
+
+3) You can check earned ICHOR tokens in Staking contract. (***earned*** method)
