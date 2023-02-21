@@ -61,6 +61,7 @@ describe("ICHOR", () => {
         await unicornRewards.setUnicornToken(unicornToken.address);
         
         //UnicornToken
+        await expect(unicornToken.connect(acc2).init(owner.address)).to.be.revertedWith("Ownable: caller is not the owner")
         await unicornToken.init(owner.address);
     });
     
@@ -156,6 +157,11 @@ describe("ICHOR", () => {
             it("Should revert notifyRewardAmount with StakingContract: caller is not an Ichor!", async () => {
                 await expect(unicornRewards.connect(acc2).notifyRewardAmount(100)).to.be.revertedWith("StakingContract: caller is not an Ichor!")
             });
+
+            it("Should revert init with UnicornToken: Already initialized!", async () => {
+                await expect(unicornToken.init(owner.address)).to.be.revertedWith("UnicornToken: Already initialized!")
+            });
+
         })
 
         describe("UnicornRewards", function () {

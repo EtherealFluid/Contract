@@ -38,7 +38,6 @@ contract ICHOR is Context, IERC20, Ownable {
     IUniswapV2Router02 public uniswapV2Router;
     address public uniswapV2Pair;
     bool private tradingOpen;
-    bool private swapping;
     bool private inSwap = false;
     bool private cooldownEnabled = false;
     uint256 private tradingActiveBlock = 0; // 0 means trading is not active
@@ -153,16 +152,20 @@ contract ICHOR is Context, IERC20, Ownable {
     function _transfer(address from, address to, uint256 amount) private {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
-        require(amount > 0, "Transfer amount must be greater than zero");
+        require(amount > 0, "ERC20: Transfer amount must be greater than zero");
         bool takeFee = true;
-        if (from != owner() && to != owner() && to != address(0) && to != address(0xdead) && !swapping) {
+        if (from != owner() && to != owner() && to != address(0) && to != address(0xdead)) {
             require(!bots[from] && !bots[to]);
 
             if (from == uniswapV2Pair && to != address(uniswapV2Router) && !_isExcludedFromFee[to] && cooldownEnabled) {
                 require(amount <= _maxBuyAmount, "ICHOR: Transfer amount exceeds the maxBuyAmount!");
                 require(balanceOf(to) + amount <= _maxWalletAmount, "ICHOR: Exceeds maximum wallet token amount!");
                 require(cooldown[to] < block.timestamp);
-                cooldown[to] = block.timestamp + (30 seconds);
+                cooldown[to] = block.timestamp + (30 seconds); 
+            }
+
+            if (to == uniswapV2Pair && from != address(uniswapV2Router) && !_isExcludedFromFee[from] && cooldownEnabled) {
+                require(amount <= _maxSellAmount, "ICHOR: Transfer amount exceeds the maxSellAmount!");
             }
         }
 
@@ -197,7 +200,7 @@ contract ICHOR is Context, IERC20, Ownable {
     }
        
     function openTrading() external onlyOwner() {
-        require(!tradingOpen,"trading is already open");        
+        require(!tradingOpen,"ICHOR: Trading is already open");        
         _approve(address(this), address(uniswapV2Router), _tTotal);
         uniswapV2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(address(this), uniswapV2Router.WETH());
         uniswapV2Router.addLiquidityETH{value: address(this).balance}(address(this),balanceOf(address(this)),0,0,owner(),block.timestamp);
@@ -206,7 +209,6 @@ contract ICHOR is Context, IERC20, Ownable {
         _maxBuyAmount = 5e7 * 10**9;
         _maxSellAmount = 5e7 * 10**9;
         _maxWalletAmount = 1e8 * 10**9;
-        //swapTokensAtAmount = 5e6 * 10**9;
         tradingOpen = true;
         tradingActiveBlock = block.number;
         IERC20(uniswapV2Pair).approve(address(uniswapV2Router), type(uint256).max);
@@ -252,7 +254,7 @@ contract ICHOR is Context, IERC20, Ownable {
     }
 
     function _transferStandard(address sender, address recipient, uint256 tAmount) private {
-        require(balanceOf(sender) >= tAmount, "ICHOR: insufficient balance!");
+        require(balanceOf(sender) >= tAmount, "ICHOR: Insufficient balance!");
         _rOwned[sender] = _rOwned[sender].sub(tAmount);
         _rOwned[recipient] = _rOwned[recipient].add(tAmount);
         emit Transfer(sender, recipient, tAmount);

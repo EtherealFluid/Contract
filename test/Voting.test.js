@@ -92,7 +92,7 @@ describe("ICHOR", () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
                 let votingType = 1
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 100
                 let percantage = 50
                 let applicant = acc3.address
@@ -115,7 +115,7 @@ describe("ICHOR", () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 100
                 let percantage = 50
                 let applicant = acc3.address
@@ -157,7 +157,7 @@ describe("ICHOR", () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 100
                 let percantage = 50
                 let applicant = acc3.address
@@ -196,7 +196,7 @@ describe("ICHOR", () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 100
                 let percantage = 50
                 let applicant = acc3.address
@@ -237,7 +237,7 @@ describe("ICHOR", () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -267,7 +267,7 @@ describe("ICHOR", () => {
 
                 expect(await unicornToken.getIsUnicorn(acc3.address)).to.be.false
 
-                await increaseTime(1000)
+                await increaseTime(518400)
                 await voting.finishVoting()
 
                 expect(await unicornToken.getIsUnicorn(acc3.address)).to.be.true
@@ -279,7 +279,7 @@ describe("ICHOR", () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
                 let votingType = 1
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -309,7 +309,7 @@ describe("ICHOR", () => {
 
                 expect(await ichor.getCharityAddress()).to.be.equal(charity.address)
 
-                await increaseTime(1000)
+                await increaseTime(518400)
                 await voting.finishVoting()
 
                 expect(await ichor.getCharityAddress()).to.be.equal(acc3.address)
@@ -326,7 +326,7 @@ describe("ICHOR", () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
                 let votingType = 1
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 100
                 let percantage = 50
                 let applicant = acc3.address
@@ -356,7 +356,7 @@ describe("ICHOR", () => {
 
                 expect(await ichor.getCharityAddress()).to.be.equal(charity.address)
 
-                await increaseTime(1000)
+                await increaseTime(518400)
                 await voting.finishVoting()
 
                 
@@ -376,7 +376,7 @@ describe("ICHOR", () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
                 let votingType = 1
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -418,7 +418,7 @@ describe("ICHOR", () => {
 
                 expect(await ichor.getCharityAddress()).to.be.equal(charity.address)
 
-                await increaseTime(1000)
+                await increaseTime(518400)
                 await voting.finishVoting()
 
                 expect(await ichor.getCharityAddress()).to.be.equal(charity.address)
@@ -430,7 +430,7 @@ describe("ICHOR", () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
                 let votingType = 1
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -468,7 +468,7 @@ describe("ICHOR", () => {
 
                 expect(await ichor.getCharityAddress()).to.be.equal(charity.address)
 
-                await increaseTime(1000)
+                await increaseTime(518400)
                 await voting.finishVoting()
 
                 expect(await ichor.getCharityAddress()).to.be.equal(acc3.address)
@@ -480,7 +480,7 @@ describe("ICHOR", () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
                 let votingType = 1
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -518,7 +518,7 @@ describe("ICHOR", () => {
 
                 expect(await ichor.getCharityAddress()).to.be.equal(charity.address)
 
-                await increaseTime(1000)
+                await increaseTime(518400)
                 await voting.finishVoting()
 
                 expect(await ichor.getCharityAddress()).to.be.equal(acc3.address)
@@ -546,7 +546,7 @@ describe("ICHOR", () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
                 let votingType = 1
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -571,7 +571,7 @@ describe("ICHOR", () => {
                 await settings()
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -589,7 +589,7 @@ describe("ICHOR", () => {
 
                 expect(await unicornToken.getIsUnicorn(acc3.address)).to.be.false
 
-                await increaseTime(1000)
+                await increaseTime(518400)
                 await voting.finishVoting()
 
                 expect(await unicornToken.getIsUnicorn(acc3.address)).to.be.true
@@ -600,7 +600,7 @@ describe("ICHOR", () => {
                 await settings()
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -618,7 +618,7 @@ describe("ICHOR", () => {
                 await settings()
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -636,7 +636,7 @@ describe("ICHOR", () => {
                 await settings()
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -659,7 +659,7 @@ describe("ICHOR", () => {
                 await settings()
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -682,7 +682,7 @@ describe("ICHOR", () => {
                 await settings()
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -705,7 +705,7 @@ describe("ICHOR", () => {
                 await settings()
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -721,7 +721,7 @@ describe("ICHOR", () => {
                 await voting.voteFor("1000")
                 await voting.connect(acc1).voteAgainst("600")
 
-                await increaseTime(1000)
+                await increaseTime(518400)
                 await voting.finishVoting()
 
                 await expect(voting.voteFor(100)).to.be.revertedWith("Voting: Voting is over")
@@ -731,7 +731,7 @@ describe("ICHOR", () => {
                 await settings()
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -747,7 +747,7 @@ describe("ICHOR", () => {
                 await voting.voteFor("1000")
                 await voting.connect(acc1).voteAgainst("600")
 
-                await increaseTime(1000)
+                await increaseTime(518400)
                 await voting.finishVoting()
 
                 await expect(voting.voteAgainst(100)).to.be.revertedWith("Voting: Voting is over")
@@ -757,7 +757,7 @@ describe("ICHOR", () => {
                 await settings()
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -780,7 +780,7 @@ describe("ICHOR", () => {
                 await settings()
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -804,7 +804,7 @@ describe("ICHOR", () => {
                 await settings()
                 let votingType = 0
                 let desctiption = keccak256(toUtf8Bytes("Description"));
-                let duration = 100
+                let duration = 518400
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
@@ -820,9 +820,69 @@ describe("ICHOR", () => {
                 await voting.voteFor("1000")
                 await voting.connect(acc1).voteAgainst("600")
 
-                await increaseTime(1000)
+                await increaseTime(518400)
 
                 await expect(voting.connect(acc3).withdraw()).to.be.revertedWith("Voting: no tokens to withdraw")
+            });
+
+            it("Should revert initialize with Initializable: contract is already initialized", async () => {
+                await settings()
+                let votingType = 0
+                let desctiption = keccak256(toUtf8Bytes("Description"));
+                let duration = 518400
+                let amountOfVoters = 4
+                let percantage = 50
+                let applicant = acc3.address
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                const receipt = await transactionReceipt.wait()
+
+                let votingInstance = receipt.events[0].args.instanceAddress.toString()
+
+                let Params = {
+                    description: desctiption,
+                    start: getTimestump(),
+                    qtyVoters: amountOfVoters,
+                    minPercentageVoters: percantage,
+                    minQtyVoters: 2,
+                    duration: duration
+                }
+                let voting = await ethers.getContractAt("IVoting", votingInstance)
+                await expect(voting.initialize(Params, applicant, ichor.address, unicornToken.address, 0)).to.be.revertedWith("Initializable: contract is already initialized")
+            });
+
+            it("Should revert createVoting with VotingFactory: Duration exceeds the allowable interval", async () => {
+                await settings()
+                let votingType = 0
+                let desctiption = keccak256(toUtf8Bytes("Description"));
+                let duration = 100
+                let amountOfVoters = 4
+                let percantage = 50
+                let applicant = acc3.address
+                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)).to.be.revertedWith("VotingFactory: Duration exceeds the allowable interval")
+                duration = 1317700
+                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)).to.be.revertedWith("VotingFactory: Duration exceeds the allowable interval")
+            });
+
+            it("Should revert createVoting with VotingFactory: QtyVoters must be greater than zero", async () => {
+                await settings()
+                let votingType = 0
+                let desctiption = keccak256(toUtf8Bytes("Description"));
+                let duration = 518400
+                let amountOfVoters = 0
+                let percantage = 50
+                let applicant = acc3.address
+                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)).to.be.revertedWith("VotingFactory: QtyVoters must be greater than zero")
+            });
+
+            it("Should revert createVoting with VotingFactory: Percentage must be greater than zero", async () => {
+                await settings()
+                let votingType = 0
+                let desctiption = keccak256(toUtf8Bytes("Description"));
+                let duration = 518400
+                let amountOfVoters = 4
+                let percantage = 0
+                let applicant = acc3.address
+                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)).to.be.revertedWith("VotingFactory: Percentage must be greater than zero")
             });
 
 

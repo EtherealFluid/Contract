@@ -155,7 +155,7 @@ describe("ICHOR", () => {
                 expect(receipt.events[0].args.toString()).to.be.equal("1000")
             });
 
-            it("Sould swapExactETHForTokensSupportingFeeOnTransferTokens", async () => {
+            it("Sould buy", async () => {
                 const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6"
                 await owner.sendTransaction({
                     to: ichor.address,
@@ -171,21 +171,83 @@ describe("ICHOR", () => {
 
                 await ichor.excludeFromFee(acc1.address)
                 
-                console.log(await ichor.balanceOf(acc1.address))
-                console.log(await ichor.balanceOf(charity.address))
-                //let deadline = getTimestump() + BigNumber.from("1000")
+                expect(await ichor.balanceOf(acc1.address)).to.be.equal(0)
+                expect(await ichor.balanceOf(charity.address)).to.be.equal(0)
                 await router.connect(acc1).swapExactETHForTokensSupportingFeeOnTransferTokens("10000", [WETH, ichor.address], acc1.address, "10000000000", {value: "10000000000"})
-                console.log(await ichor.balanceOf(acc1.address))
-                console.log(await ichor.balanceOf(charity.address))
+                expect(await ichor.balanceOf(acc1.address)).to.not.be.equal(0)
+                expect(await ichor.balanceOf(charity.address)).to.be.equal(0)
+            });
+
+            it("Sould sell", async () => {
+                const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6"
+                await owner.sendTransaction({
+                    to: ichor.address,
+                    value: BigNumber.from("100000000000"),
+                  });
+                await ichor.transfer(ichor.address, "100000000000")
+                await ichor.openTrading()
+
+                await owner.sendTransaction({
+                    to: acc1.address,
+                    value: BigNumber.from("100000000000"),
+                  });
+
+                router.connect(acc1).swapExactETHForTokensSupportingFeeOnTransferTokens(
+                    "10000", 
+                    [WETH, ichor.address], 
+                    acc1.address, 
+                    "10000000000", 
+                    {value: "10000000000"}
+                )
+
+                await ichor.connect(acc1).approve(router.address, await ichor.balanceOf(acc1.address))
+
+                let tokenBalanceBefore = await ichor.balanceOf(acc1.address)
+
+                await router.connect(acc1).swapExactTokensForETHSupportingFeeOnTransferTokens(
+                    "1000000000",
+                    "10000", 
+                    [ichor.address, WETH], 
+                    acc1.address, 
+                    "10000000000"
+                )
+                expect(await ichor.balanceOf(acc1.address)).to.be.lessThan(tokenBalanceBefore)
+            });
+
+
+            it("Sould manualswap and withdrawStuckETH", async () => {
+                await owner.sendTransaction({
+                    to: ichor.address,
+                    value: BigNumber.from("100000000000"),
+                  });
+                await ichor.transfer(ichor.address, "100000000000")
+                await ichor.openTrading()
+
+
+                await ichor.transfer(ichor.address, "10000000")
+                expect(await ichor.balanceOf(ichor.address)).to.be.equal(10000000)
+                expect(await ethers.provider.getBalance(ichor.address)).to.be.equal(0)
+                await ichor.manualswap()
+                expect(await ichor.balanceOf(ichor.address)).to.be.equal(0)
+                expect(await ethers.provider.getBalance(ichor.address)).to.not.be.equal(0)
+
+                let balanceBefore = await ethers.provider.getBalance(owner.address)
+
+                await ichor.withdrawStuckETH()
+                
+                expect(await ethers.provider.getBalance(owner.address)).to.be.greaterThan(balanceBefore)
             });
             
         })
 
         describe("Reverts", function () {
-            xit("Sould revert approve with ERC20: approve from the zero address", async () => {
-                zero = await ethers.getSigner(ZERO_ADDRESS)
-                await ichor.connect(zero).approve(acc1.address, "100")
-                
+            it("Sould revert approve with ERC20: approve from the zero address", async () => {
+                await hre.network.provider.request({
+                    method: "hardhat_impersonateAccount",
+                    params: [ZERO_ADDRESS],
+                  });
+                const signer = await ethers.getSigner(ZERO_ADDRESS)
+                await expect(ichor.connect(signer).approve(acc1.address, "100")).to.be.revertedWith("ERC20: approve from the zero address") 
             });
 
             it("Sould revert approve with ERC20: approve to the zero address", async () => {
@@ -200,16 +262,21 @@ describe("ICHOR", () => {
                 await expect(ichor.connect(voting).setCharityAddress(ZERO_ADDRESS)).to.be.revertedWith("ICHOR: Charity cannot be a zero address!")
             });
 
-            xit("Sould revert transfer with ERC20: transfer from the zero address", async () => {
-                await expect(ichor.connect(zero).transfer(acc1.address, "100")).to.be.revertedWith("ERC20: transfer from the zero address")
+            it("Sould revert transfer with ERC20: transfer from the zero address", async () => {
+                await hre.network.provider.request({
+                    method: "hardhat_impersonateAccount",
+                    params: [ZERO_ADDRESS],
+                  });
+                const signer = await ethers.getSigner(ZERO_ADDRESS)
+                await expect(ichor.connect(signer).transfer(acc1.address, "100")).to.be.revertedWith("ERC20: transfer from the zero address")
             });
 
             it("Sould revert transfer with ERC20: transfer to the zero address", async () => {
                 await expect(ichor.transfer(ZERO_ADDRESS, "100")).to.be.revertedWith("ERC20: transfer to the zero address")
             });
 
-            it("Sould revert transfer with Transfer amount must be greater than zero", async () => {
-                await expect(ichor.transfer(acc1.address, 0)).to.be.revertedWith("Transfer amount must be greater than zero")
+            it("Sould revert transfer with ERC20: Transfer amount must be greater than zero", async () => {
+                await expect(ichor.transfer(acc1.address, 0)).to.be.revertedWith("ERC20: Transfer amount must be greater than zero")
             });
 
             it("Sould revert transferFrom with ERC20: transfer from the zero address", async () => {
@@ -220,8 +287,8 @@ describe("ICHOR", () => {
                 await expect(ichor.transferFrom(owner.address, ZERO_ADDRESS, "100")).to.be.revertedWith("ERC20: transfer to the zero address")
             });
 
-            it("Sould revert transferFrom with Transfer amount must be greater than zero", async () => {
-                await expect(ichor.transferFrom(acc1.address, acc2.address, 0)).to.be.revertedWith("Transfer amount must be greater than zero")
+            it("Sould revert transferFrom with ERC20: Transfer amount must be greater than zero", async () => {
+                await expect(ichor.transferFrom(acc1.address, acc2.address, 0)).to.be.revertedWith("ERC20: Transfer amount must be greater than zero")
             });
 
             it("Sould revert migrateTokens with ICHOR: cant pay now!", async () => {
@@ -246,7 +313,23 @@ describe("ICHOR", () => {
                 await expect(ichor.connect(acc1).migrateTokens()).to.be.revertedWith("ICHOR: tokens already claimed!")
             });
 
-            xit("Sould revert purchasing with ICHOR: Transfer amount exceeds the maxBuyAmount!", async () => {
+            it("Sould revert transfer with ICHOR: Insufficient balance!", async () => {
+                await expect(ichor.connect(acc2).transfer(acc1.address, "100")).to.be.revertedWith("ICHOR: Insufficient balance!")
+            });
+
+            it("Sould revert openTrading with ICHOR: Trading is already open", async () => {
+                const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6"
+                await owner.sendTransaction({
+                    to: ichor.address,
+                    value: BigNumber.from("100000000000"),
+                  });
+                await ichor.transfer(ichor.address, "100000000000")
+                await ichor.openTrading()
+
+                await expect(ichor.openTrading()).to.be.revertedWith("ICHOR: Trading is already open")
+            });
+
+            it("Sould revert purchasing with UniswapV2: TRANSFER_FAILED", async () => {
                 const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6"
                 await owner.sendTransaction({
                     to: ichor.address,
@@ -260,7 +343,30 @@ describe("ICHOR", () => {
                     value: BigNumber.from("100000000000"),
                   });
 
-                //await ichor.excludeFromFee(acc1.address)
+                await ichor.setMaxWalletAmount("10")
+                await expect(router.connect(acc1).swapExactETHForTokensSupportingFeeOnTransferTokens(
+                    "10000", 
+                    [WETH, ichor.address], 
+                    acc1.address, 
+                    "10000000000", 
+                    {value: "10000000000"}
+                )).to.be.revertedWith("UniswapV2: TRANSFER_FAILED")
+            });
+
+            it("Sould revert purchasing with UniswapV2: TRANSFER_FAILED", async () => {
+                const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6"
+                await owner.sendTransaction({
+                    to: ichor.address,
+                    value: BigNumber.from("100000000000"),
+                  });
+                await ichor.transfer(ichor.address, "100000000000")
+                await ichor.openTrading()
+
+                await owner.sendTransaction({
+                    to: acc1.address,
+                    value: BigNumber.from("100000000000"),
+                  });
+
                 await ichor.setMaxBuyAmount("10")
                 await expect(router.connect(acc1).swapExactETHForTokensSupportingFeeOnTransferTokens(
                     "10000", 
@@ -268,7 +374,72 @@ describe("ICHOR", () => {
                     acc1.address, 
                     "10000000000", 
                     {value: "10000000000"}
-                )).to.be.revertedWith("ICHOR: Transfer amount exceeds the maxBuyAmount!")
+                )).to.be.revertedWith("UniswapV2: TRANSFER_FAILED")
+            });
+
+            it("Sould revert purchasing with TransferHelper: TRANSFER_FROM_FAILED", async () => {
+                const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6"
+                await owner.sendTransaction({
+                    to: ichor.address,
+                    value: BigNumber.from("100000000000"),
+                  });
+                await ichor.transfer(ichor.address, "100000000000")
+                await ichor.openTrading()
+
+                await owner.sendTransaction({
+                    to: acc1.address,
+                    value: BigNumber.from("100000000000"),
+                  });
+
+                await ichor.setMaxSellAmount("10")
+                router.connect(acc1).swapExactETHForTokensSupportingFeeOnTransferTokens(
+                    "10000", 
+                    [WETH, ichor.address], 
+                    acc1.address, 
+                    "10000000000", 
+                    {value: "10000000000"}
+                )
+
+                await ichor.connect(acc1).approve(router.address, await ichor.balanceOf(acc1.address))
+
+                await expect(router.connect(acc1).swapExactTokensForETHSupportingFeeOnTransferTokens(
+                    "1000000000",
+                    "10000", 
+                    [ichor.address, WETH], 
+                    acc1.address, 
+                    "10000000000"
+                )).to.be.revertedWith("TransferHelper: TRANSFER_FROM_FAILED")
+            });
+
+            it("Sould revert purchasing with UniswapV2: TRANSFER_FAILED", async () => {
+                const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6"
+                await owner.sendTransaction({
+                    to: ichor.address,
+                    value: BigNumber.from("100000000000"),
+                  });
+                await ichor.transfer(ichor.address, "100000000000")
+                await ichor.openTrading()
+
+                await owner.sendTransaction({
+                    to: acc1.address,
+                    value: BigNumber.from("100000000000"),
+                  });
+
+                await router.connect(acc1).swapExactETHForTokensSupportingFeeOnTransferTokens(
+                    "5000", 
+                    [WETH, ichor.address], 
+                    acc1.address, 
+                    "10000000000", 
+                    {value: "10000000000"}
+                )
+
+                await expect(router.connect(acc1).swapExactETHForTokensSupportingFeeOnTransferTokens(
+                    "5000", 
+                    [WETH, ichor.address], 
+                    acc1.address, 
+                    "10000000000", 
+                    {value: "10000000000"}
+                )).to.be.revertedWith("UniswapV2: TRANSFER_FAILED")
             });
 
             it("Sould revert setCooldownEnabled with Ownable: caller is not the owner", async () => {
@@ -310,10 +481,10 @@ describe("ICHOR", () => {
             it("Sould revert withdrawStuckETH with Ownable: caller is not the owner", async () => {
                 await expect(ichor.connect(acc2).withdrawStuckETH()).to.be.revertedWith("Ownable: caller is not the owner")
             });
-            
 
-            
-            
+            it("Sould revert delBot with Ownable: caller is not the owner", async () => {
+                await expect(ichor.connect(acc2).delBot(acc1.address)).to.be.revertedWith("Ownable: caller is not the owner")
+            });  
         })
     })
 })

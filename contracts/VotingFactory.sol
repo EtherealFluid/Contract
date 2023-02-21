@@ -58,9 +58,9 @@ contract VotingFactory is Ownable, IVotingFactory {
         address _applicant,
         address _unicornToken
     ) external override onlyUnicorns {
-        require(_duration > 0, 'VF: duration == 0');
-        require(_qtyVoters > 0, 'QtyVoters must be greater than zero');
-        require(_minPercentageVoters > 0, 'Percentage must be greater than zero');
+        require(_duration >= 518400 && _duration <= 1317600, 'VotingFactory: Duration exceeds the allowable interval');
+        require(_qtyVoters > 0, 'VotingFactory: QtyVoters must be greater than zero');
+        require(_minPercentageVoters > 0, 'VotingFactory: Percentage must be greater than zero');
 
         address instance;
         instance = Clones.clone(masterVoting);

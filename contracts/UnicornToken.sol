@@ -28,7 +28,7 @@ contract UnicornToken is Ownable {
     }
 
     modifier onlyOnce() {
-        require(!isInit, "UnicornToken: already initialized!");
+        require(!isInit, "UnicornToken: Already initialized!");
         _;
     }
 
