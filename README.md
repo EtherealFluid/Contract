@@ -227,3 +227,5 @@ Owner can:
 2) You can stake ICHOR tokens to recieve Sacrifice Tokens and earning rewards. (***stake*** method)
 
 3) You can check earned ICHOR tokens in Staking contract. (***earned*** method)
+
+4) You can mint yourself a mockERC20 tokens (0x4955F4E026CdB8614eBec6175A8049E87d323373, ***mint*** method) and migrate tokens in ICHOR yoken contract (***migrateTokens*** method)
