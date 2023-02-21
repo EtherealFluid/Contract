@@ -5,9 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IICHOR.sol";
 import "./interfaces/ISacrificeToken.sol";
-import './interfaces/IUnicornToken.sol';
+import "./interfaces/IUnicornToken.sol";
 
-import "hardhat/console.sol";
 
 contract UnicornRewards is Ownable {
     uint256 public finishAt;
@@ -17,7 +16,7 @@ contract UnicornRewards is Ownable {
     uint256 public rewardAmount;
 
     uint256 public rewardPerTokenStored;
-    
+
     IICHOR public ichorToken;
 
     IUnicornToken public unicornToken;
@@ -26,20 +25,25 @@ contract UnicornRewards is Ownable {
 
     mapping(address => uint256) public rewards;
 
-    // Total staked
     uint256 public totalSupply;
-    // User address => staked amount
+
     mapping(address => uint256) public balanceOf;
 
     constructor() {}
 
-    modifier onlyUnicorn {
-        require(msg.sender == address(unicornToken), "StakingContract: caller is not a UnicornToken!");
+    modifier onlyUnicorn() {
+        require(
+            msg.sender == address(unicornToken),
+            "StakingContract: caller is not a UnicornToken!"
+        );
         _;
     }
 
-    modifier onlyIchor {
-        require(msg.sender == address(ichorToken), "StakingContract: caller is not an Ichor!");
+    modifier onlyIchor() {
+        require(
+            msg.sender == address(ichorToken),
+            "StakingContract: caller is not an Ichor!"
+        );
         _;
     }
 
@@ -55,19 +59,19 @@ contract UnicornRewards is Ownable {
         _;
     }
 
-    function setIchorAddress (address ichorToken_) external onlyOwner {
+    function setIchorAddress(address ichorToken_) external onlyOwner {
         ichorToken = IICHOR(ichorToken_);
     }
 
-    function getIchorAddress () external view returns(address) {
+    function getIchorAddress() external view returns (address) {
         return address(ichorToken);
     }
 
-    function setUnicornToken (address unicornToken_) external onlyOwner {
+    function setUnicornToken(address unicornToken_) external onlyOwner {
         unicornToken = IUnicornToken(unicornToken_);
     }
 
-    function getUnicornToken () external view returns(address) {
+    function getUnicornToken() external view returns (address) {
         return address(unicornToken);
     }
 
@@ -86,12 +90,16 @@ contract UnicornRewards is Ownable {
             totalSupply;
     }
 
-    function stake(address _account) external onlyUnicorn updateReward(_account) {
+    function stake(
+        address _account
+    ) external onlyUnicorn updateReward(_account) {
         balanceOf[_account] = 1;
         totalSupply += 1;
     }
 
-    function unstake(address _account) external onlyUnicorn updateReward(_account) {
+    function unstake(
+        address _account
+    ) external onlyUnicorn updateReward(_account) {
         balanceOf[_account] = 1;
         totalSupply -= 1;
     }
@@ -117,7 +125,8 @@ contract UnicornRewards is Ownable {
         if (block.timestamp >= finishAt) {
             rewardAmount = _amount;
         } else {
-            uint256 remainingRewards = (finishAt - block.timestamp) * rewardAmount;
+            uint256 remainingRewards = (finishAt - block.timestamp) *
+                rewardAmount;
             rewardAmount = _amount + remainingRewards;
         }
 

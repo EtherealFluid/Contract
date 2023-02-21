@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./IVotingInitialize.sol";
+
 interface IVotingFactory is IVotingInitialize {
     function createVoting(
         VotingVariants _typeVoting,
@@ -16,10 +17,25 @@ interface IVotingFactory is IVotingInitialize {
     function getVotingInstancesLength() external view returns (uint256);
 
     function isVotingInstance(address instance) external view returns (bool);
-    
-    event CreateVoting(address indexed instanceAddress, VotingVariants indexed instanceType);
-    event SetMasterVoting(address indexed previousContract, address indexed newContract);
-    event SetMasterVotingAllowList(address indexed previousContract, address indexed newContract);
-    event SetVotingTokenRate(uint256 indexed previousRate, uint256 indexed newRate);
-    event SetCreateProposalRate(uint256 indexed previousRate, uint256 indexed newRate);
+
+    event CreateVoting(
+        address indexed instanceAddress,
+        VotingVariants indexed instanceType
+    );
+    event SetMasterVoting(
+        address indexed previousContract,
+        address indexed newContract
+    );
+    event SetMasterVotingAllowList(
+        address indexed previousContract,
+        address indexed newContract
+    );
+    event SetVotingTokenRate(
+        uint256 indexed previousRate,
+        uint256 indexed newRate
+    );
+    event SetCreateProposalRate(
+        uint256 indexed previousRate,
+        uint256 indexed newRate
+    );
 }

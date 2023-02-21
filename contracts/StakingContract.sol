@@ -6,10 +6,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IICHOR.sol";
 import "./interfaces/ISacrificeToken.sol";
 
-import "hardhat/console.sol";
 
 contract StakingContract is Ownable {
-
     uint256 public finishAt;
 
     uint256 public updatedAt;
@@ -48,14 +46,20 @@ contract StakingContract is Ownable {
 
         _;
     }
-    
-    modifier onlyTrusted {
-        require(msg.sender == address(ichorToken) || msg.sender == address(this), "StakingContract: caller is not THIS or ICHOR token!");
+
+    modifier onlyTrusted() {
+        require(
+            msg.sender == address(ichorToken) || msg.sender == address(this),
+            "StakingContract: caller is not THIS or ICHOR token!"
+        );
         _;
     }
 
     modifier stakePeriodEnded(address from) {
-        require(block.timestamp >= timeStakeEnds[from], "StakingContract: period not ended!");
+        require(
+            block.timestamp >= timeStakeEnds[from],
+            "StakingContract: period not ended!"
+        );
         _;
     }
 
@@ -63,7 +67,7 @@ contract StakingContract is Ownable {
         ichorToken = IICHOR(ichorToken_);
     }
 
-    function getIchorAddress() external view returns(address) {
+    function getIchorAddress() external view returns (address) {
         return address(ichorToken);
     }
 
@@ -71,15 +75,15 @@ contract StakingContract is Ownable {
         sacrificeToken = ISacrificeToken(sacrificeToken_);
     }
 
-    function getSacrificeToken() external view returns(address) {
+    function getSacrificeToken() external view returns (address) {
         return address(sacrificeToken);
     }
 
-    function getStakedAmount(address user) external view returns(uint256) {
+    function getStakedAmount(address user) external view returns (uint256) {
         return sacrificeToken.balanceOf(user);
     }
 
-    function getTimeStakeEnds(address user) external view returns(uint256) {
+    function getTimeStakeEnds(address user) external view returns (uint256) {
         return timeStakeEnds[user];
     }
 
@@ -100,7 +104,10 @@ contract StakingContract is Ownable {
     }
 
     function stake(uint256 _amount) external updateReward(msg.sender) {
-        require(sacrificeToken.balanceOf(msg.sender) == 0, "StakingContract: tokens already staked!");
+        require(
+            sacrificeToken.balanceOf(msg.sender) == 0,
+            "StakingContract: tokens already staked!"
+        );
         require(_amount > 0, "StakingContract: amount is 0!");
         ichorToken.transferFrom(msg.sender, address(this), _amount);
         isStaked[msg.sender] = true;
@@ -109,18 +116,23 @@ contract StakingContract is Ownable {
     }
 
     function unstake() external updateReward(msg.sender) {
-        require(sacrificeToken.balanceOf(msg.sender) > 0, "StakingContract: no tokens staked!");
+        require(
+            sacrificeToken.balanceOf(msg.sender) > 0,
+            "StakingContract: no tokens staked!"
+        );
         uint256 amountToTransfer = rewards[msg.sender];
         uint256 amountToUnstake = sacrificeToken.balanceOf(msg.sender);
-        
+
         sacrificeToken.burn(msg.sender, sacrificeToken.balanceOf(msg.sender));
         isStaked[msg.sender] = false;
         rewards[msg.sender] = 0;
-        
+
         if (block.timestamp >= timeStakeEnds[msg.sender]) {
             ichorToken.transfer(msg.sender, amountToTransfer);
         } else {
-            uint256 amountWithFee = amountToTransfer - (amountToTransfer * 15 ) / denominator;
+            uint256 amountWithFee = amountToTransfer -
+                (amountToTransfer * 15) /
+                denominator;
             ichorToken.transfer(msg.sender, amountWithFee);
             this.notifyRewardAmount(amountToTransfer - amountWithFee);
         }
@@ -130,12 +142,15 @@ contract StakingContract is Ownable {
     function earned(address _account) public view returns (uint256) {
         uint256 balance = sacrificeToken.balanceOf(_account);
         return
-            ((balance *
-                (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
-            rewards[_account];
+            ((balance * (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) 
+                + rewards[_account];
     }
 
-    function getReward() external stakePeriodEnded(msg.sender) updateReward(msg.sender) {
+    function getReward()
+        external
+        stakePeriodEnded(msg.sender)
+        updateReward(msg.sender)
+    {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
@@ -149,7 +164,8 @@ contract StakingContract is Ownable {
         if (block.timestamp >= finishAt) {
             rewardAmount = _amount;
         } else {
-            uint256 remainingRewards = (finishAt - block.timestamp) * rewardAmount;
+            uint256 remainingRewards = (finishAt - block.timestamp) *
+                rewardAmount;
             rewardAmount = _amount + remainingRewards;
         }
 
@@ -167,7 +183,9 @@ contract StakingContract is Ownable {
         return x <= y ? x : y;
     }
 
-    function setMinimalStakingPeriod (uint256 stakingPeriod_) external onlyOwner {
+    function setMinimalStakingPeriod(
+        uint256 stakingPeriod_
+    ) external onlyOwner {
         stakingPeriod = stakingPeriod_;
     }
 }

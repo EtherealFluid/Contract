@@ -13,7 +13,5 @@ interface IUnicornRewards {
 
     function getReward() external;
 
-    function notifyRewardAmount(
-        uint256 _amount
-    ) external;
+    function notifyRewardAmount(uint256 _amount) external;
 }

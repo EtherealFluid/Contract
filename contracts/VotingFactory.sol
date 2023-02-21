@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/proxy/Clones.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
-import './Voting.sol';
-import './interfaces/IVotingFactory.sol';
-import './interfaces/IUnicornToken.sol';
+import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./Voting.sol";
+import "./interfaces/IVotingFactory.sol";
+import "./interfaces/IUnicornToken.sol";
 import "./interfaces/IVotingInitialize.sol";
 import "./interfaces/IVoting.sol";
 
@@ -19,13 +19,16 @@ contract VotingFactory is Ownable, IVotingFactory {
 
     votingInstance[] public votingInstances;
 
-    IICHOR public ichorToken; 
+    IICHOR public ichorToken;
     IUnicornToken public unicornToken;
 
-    mapping (address => bool) mVotingInstances;
+    mapping(address => bool) mVotingInstances;
 
     modifier onlyUnicorns() {
-        require(unicornToken.getIsUnicorn(msg.sender), "VotingFactory: caller is not a Unicorn");
+        require(
+            unicornToken.getIsUnicorn(msg.sender),
+            "VotingFactory: caller is not a Unicorn"
+        );
         _;
     }
 
@@ -37,7 +40,7 @@ contract VotingFactory is Ownable, IVotingFactory {
         ichorToken = IICHOR(ichorToken_);
     }
 
-    function getIchorAddress() external view returns(address) {
+    function getIchorAddress() external view returns (address) {
         return address(ichorToken);
     }
 
@@ -45,7 +48,7 @@ contract VotingFactory is Ownable, IVotingFactory {
         unicornToken = IUnicornToken(unicornToken_);
     }
 
-    function getUnicornToken() external view returns(address) {
+    function getUnicornToken() external view returns (address) {
         return address(unicornToken);
     }
 
@@ -58,9 +61,18 @@ contract VotingFactory is Ownable, IVotingFactory {
         address _applicant,
         address _unicornToken
     ) external override onlyUnicorns {
-        require(_duration >= 518400 && _duration <= 1317600, 'VotingFactory: Duration exceeds the allowable interval');
-        require(_qtyVoters > 0, 'VotingFactory: QtyVoters must be greater than zero');
-        require(_minPercentageVoters > 0, 'VotingFactory: Percentage must be greater than zero');
+        require(
+            _duration >= 518400 && _duration <= 1317600,
+            "VotingFactory: Duration exceeds the allowable interval"
+        );
+        require(
+            _qtyVoters > 0,
+            "VotingFactory: QtyVoters must be greater than zero"
+        );
+        require(
+            _minPercentageVoters > 0,
+            "VotingFactory: Percentage must be greater than zero"
+        );
 
         address instance;
         instance = Clones.clone(masterVoting);
@@ -78,12 +90,22 @@ contract VotingFactory is Ownable, IVotingFactory {
             address(_unicornToken),
             _typeVoting
         );
-        votingInstances.push(votingInstance({addressInstance: instance, typeInstance: _typeVoting}));
+        votingInstances.push(
+            votingInstance({
+                addressInstance: instance,
+                typeInstance: _typeVoting
+            })
+        );
         mVotingInstances[instance] = true;
         emit CreateVoting(instance, _typeVoting);
     }
 
-    function getVotingInstancesLength() external view override returns (uint256) {
+    function getVotingInstancesLength()
+        external
+        view
+        override
+        returns (uint256)
+    {
         return votingInstances.length;
     }
 

@@ -1,37 +1,85 @@
-require('dotenv').config();
 
-const RPVSale = artifacts.require('RPVSale.sol')
-const RPT = artifacts.require('RPTToken.sol')
-const RPV = artifacts.require('RPVToken.sol')
-const votingFactory = artifacts.require('VotingFactory')
+// We require the Hardhat Runtime Environment explicitly here. This is optional
+// but useful for running the script in a standalone fashion through `node <script>`.
+//
+// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
+// will compile your contracts, add the Hardhat Runtime Environment's members to the
+// global scope, and execute the script.
+const { ethers } = require("hardhat");
+const { BigNumber } = require("ethers");
+const { format } = require("prettier");
+require('dotenv').config()
+const { ACC_PRIVATE_KEY } = process.env;
 
-module.exports = async function (deployer, network, accounts) {
-  deployer.then(async () => {
-    /* if (network === 'hardhat') {
-    await deployer.deploy(RPVSale, '500000000000000000', accounts[8])
-    await deployer.deploy(RPT, accounts[9])
-    await deployer.deploy(RPV, RPVSale.address)
-    await deployer.deploy(
-      votingFactory,
-      accounts[9],
-      accounts[1],
-      RPVSale.address,
-      2,
-      5
-    ) */
-    const sale = await deployer.deploy(RPVSale, '500000000000000000', process.env.DEPLOYER_ACCOUNT)
-    await deployer.deploy(RPT, process.env.DEPLOYER_ACCOUNT)
-    await deployer.deploy(RPV, RPVSale.address)
-    const saleInstance = await RPVSale.deployed();
-    await saleInstance.setToken(RPV.address, { from: process.env.DEPLOYER_ACCOUNT })
-    await deployer.deploy(
-      votingFactory,
-      RPT.address,
-      process.env.RINKEBY_FACTORY_OWNER,
-      RPVSale.address,
-      '500000000000000000', // rate 2,
-      '200000000000000000', // rate 5
-    )
-    await sale.transferOwnership( process.env.RINKEBY_FACTORY_OWNER );
-  })
+
+async function main() {
+    const StakingTx = await ethers.getContractFactory("StakingContract");
+        staking = await StakingTx.deploy("2592000");
+
+        const VotingFactoryTx = await ethers.getContractFactory("VotingFactory");
+        vFactory = await VotingFactoryTx.deploy();
+
+        const UnicornRewardsx = await ethers.getContractFactory("UnicornRewards");
+        unicornRewards = await UnicornRewardsx.deploy();
+
+        const UnicornTokenx = await ethers.getContractFactory("UnicornToken");
+        unicornToken = await UnicornTokenx.deploy("Unicorn", "UT", vFactory.address, unicornRewards.address);
+
+        uniswapV2Router = "0x7a250d5630b4cf539739df2c5dacb4c659f2488d"
+        //oldIchorAddress = "0x2A552CE0738F298d901ADF2ECecCCC73493347ab"
+
+        const mockTX = await ethers.getContractFactory("mockERC20");
+        const oldIchorAddress = await mockTX.deploy();
+        const charity = "0xa842a38CD758f8dE8537C5CBcB2006DB0250eC7C"
+        const migrationPayer = "0xa842a38CD758f8dE8537C5CBcB2006DB0250eC7C"
+
+        const ICHORTx = await ethers.getContractFactory("ICHOR");
+        ichor = await ICHORTx.deploy(uniswapV2Router, oldIchorAddress.address, charity, vFactory.address, staking.address, unicornRewards.address, migrationPayer);
+
+        const name = "SactificeToken";
+        const symbol = "ST";
+        const SacrificeTokenTx = await ethers.getContractFactory("SacrificeToken");
+        sacrifice = await SacrificeTokenTx.deploy(name, symbol, staking.address);
+
+        //settings
+
+        //Staking
+        await staking.setIchorAddress(ichor.address);
+        await staking.setSacrificeToken(sacrifice.address);
+
+        //VotingFactory
+        await vFactory.setIchorAddress(ichor.address);
+        await vFactory.setUnicornToken(unicornToken.address);
+
+        //UnicornRewards
+        await unicornRewards.setIchorAddress(ichor.address);
+        await unicornRewards.setUnicornToken(unicornToken.address);
+
+        let owner = "0xa842a38CD758f8dE8537C5CBcB2006DB0250eC7C"
+        //UnicornToken
+        await unicornToken.init(owner);
+
+
+        const signer = new ethers.Wallet(ACC_PRIVATE_KEY, ethers.provider);
+        await signer.sendTransaction({
+          to: ichor.address,
+          value: BigNumber.from("10000000000"),
+        });
+        
+        await ichor.transfer(ichor.address, "476200233")
+        await ichor.openTrading()
+
+
+        console.log("Staking address:",  staking.address)
+        console.log("vFactory address:",  vFactory.address)
+        console.log("UnicornRewards address:",  unicornRewards.address)
+        console.log("UnicornToken address:",  unicornToken.address)
+        console.log("oldIchorAddress address:",  oldIchorAddress.address)
+        console.log("ICHOR address:",  ichor.address)
+        console.log("Sacrifice address:",  sacrifice.address)
 }
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

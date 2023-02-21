@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./IVotingInitialize.sol";
 
-interface IVoting is IVotingInitialize{
+interface IVoting is IVotingInitialize {
     function initialize(
         Params memory _params,
         address _applicant,
@@ -21,11 +21,7 @@ interface IVoting is IVotingInitialize{
     function getStats()
         external
         view
-        returns (
-            uint256 _for,
-            uint256 _against,
-            uint256 _count
-        );
+        returns (uint256 _for, uint256 _against, uint256 _count);
 
     function voteFor(uint256 amount_) external;
 
@@ -33,10 +29,7 @@ interface IVoting is IVotingInitialize{
 
     function finishVoting() external;
 
-    function getVotingResults () external;
+    function getVotingResults() external;
 
-    function withdraw () external; 
+    function withdraw() external;
 }
-
-
-

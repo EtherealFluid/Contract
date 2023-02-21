@@ -5,11 +5,11 @@ interface IStakingContract {
 
     function setIchorAddress(address ichorToken_) external;
 
-    function getIchorAddress() external view returns(address);
+    function getIchorAddress() external view returns (address);
 
-    function getStakedAmount(address user) external view returns(uint256);
+    function getStakedAmount(address user) external view returns (uint256);
 
-    function getTimeStakeEnds(address user) external view returns(uint256);
+    function getTimeStakeEnds(address user) external view returns (uint256);
 
     function lastTimeRewardApplicable() external view returns (uint256);
 
@@ -23,10 +23,7 @@ interface IStakingContract {
 
     function getReward() external;
 
-    function notifyRewardAmount(
-        uint256 _amount
-    ) external;
+    function notifyRewardAmount(uint256 _amount) external;
 
-    function setMinimalStakingPeriod (uint256 stakingPeriod_) external;
-    
+    function setMinimalStakingPeriod(uint256 stakingPeriod_) external;
 }

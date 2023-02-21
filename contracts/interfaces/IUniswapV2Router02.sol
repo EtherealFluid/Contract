@@ -8,8 +8,11 @@ interface IUniswapV2Router02 {
         address to,
         uint deadline
     ) external;
+
     function factory() external pure returns (address);
+
     function WETH() external pure returns (address);
+
     function addLiquidityETH(
         address token,
         uint amountTokenDesired,
@@ -17,9 +20,12 @@ interface IUniswapV2Router02 {
         uint amountETHMin,
         address to,
         uint deadline
-    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
+    )
+        external
+        payable
+        returns (uint amountToken, uint amountETH, uint liquidity);
 
-     function swapExactETHForTokensSupportingFeeOnTransferTokens(
+    function swapExactETHForTokensSupportingFeeOnTransferTokens(
         uint amountOutMin,
         address[] calldata path,
         address to,
