@@ -21,7 +21,6 @@ Its main purpose is to provide the charity donations to different organizations 
 [-- Voting](#Voting)
 [-- UnicornToken](#UnicornToken)
 [-- UnicornRewards](#UnicornRewards)
-[[Known Issues]](#issues)
 
 <a name="preqs"/>
 
