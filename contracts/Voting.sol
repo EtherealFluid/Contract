@@ -60,7 +60,7 @@ contract Voting is Initializable, ContextUpgradeable, IVoting {
 
     /// @notice Indicates that user is voted
     /// @param voter Address of voter
-    /// @param choise Choise of  voter (True - For, False - Against)
+    /// @param choice Choice of  voter (True - For, False - Against)
     /// @param amount_ Amount of ICHOR tokens locked
     event Voted(address voter, bool choice, uint256 amount_);
 
