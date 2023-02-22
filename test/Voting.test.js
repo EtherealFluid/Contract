@@ -96,7 +96,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 100
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 
                 const receipt = await transactionReceipt.wait()
                 //console.log(receipt.logs)
@@ -119,7 +119,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 100
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -161,7 +161,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 100
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -200,7 +200,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 100
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -241,7 +241,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -283,7 +283,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -330,7 +330,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 100
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -380,7 +380,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -434,7 +434,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -484,7 +484,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -555,7 +555,6 @@ describe("ICHOR", () => {
                     desctiption, 
                     duration, amountOfVoters, 
                     percantage, applicant, 
-                    unicornToken.address
                 )).to.be.revertedWith("VotingFactory: caller is not a Unicorn")
             });
 
@@ -575,7 +574,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -604,7 +603,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -622,7 +621,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -640,7 +639,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -663,7 +662,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -686,7 +685,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -709,7 +708,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -735,7 +734,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -761,7 +760,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -784,7 +783,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -808,7 +807,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -833,7 +832,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
                 const receipt = await transactionReceipt.wait()
 
                 let votingInstance = receipt.events[0].args.instanceAddress.toString()
@@ -858,9 +857,9 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 50
                 let applicant = acc3.address
-                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)).to.be.revertedWith("VotingFactory: Duration exceeds the allowable interval")
+                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)).to.be.revertedWith("VotingFactory: Duration exceeds the allowable interval")
                 duration = 1317700
-                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)).to.be.revertedWith("VotingFactory: Duration exceeds the allowable interval")
+                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)).to.be.revertedWith("VotingFactory: Duration exceeds the allowable interval")
             });
 
             it("Should revert createVoting with VotingFactory: QtyVoters must be greater than zero", async () => {
@@ -871,7 +870,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 0
                 let percantage = 50
                 let applicant = acc3.address
-                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)).to.be.revertedWith("VotingFactory: QtyVoters must be greater than zero")
+                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)).to.be.revertedWith("VotingFactory: QtyVoters must be greater than zero")
             });
 
             it("Should revert createVoting with VotingFactory: Percentage must be greater than zero", async () => {
@@ -882,7 +881,7 @@ describe("ICHOR", () => {
                 let amountOfVoters = 4
                 let percantage = 0
                 let applicant = acc3.address
-                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant, unicornToken.address)).to.be.revertedWith("VotingFactory: Percentage must be greater than zero")
+                await expect(vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)).to.be.revertedWith("VotingFactory: Percentage must be greater than zero")
             });
 
 

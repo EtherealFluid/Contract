@@ -10,8 +10,7 @@ interface IVotingFactory is IVotingInitialize {
         uint256 _duration,
         uint256 _qtyVoters,
         uint256 _minPercentageVoters,
-        address _applicant,
-        address unicornToken
+        address _applicant
     ) external;
 
     function getVotingInstancesLength() external view returns (uint256);
