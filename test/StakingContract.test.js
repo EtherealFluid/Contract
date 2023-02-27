@@ -153,6 +153,38 @@ describe("ICHOR", () => {
                 expect(await staking.earned(acc2.address)).to.be.equal(expectedAmountToAcc2)
             });
 
+            it("Sould let stake and earn distributions with different fee", async () => {
+                //await loadFixture(settings);
+                await settings()
+
+                let amountToStakeAcc1 = 600
+                let amountToStakeAcc2 = 400
+        
+                await staking.connect(acc1).stake(amountToStakeAcc1)
+                await staking.connect(acc2).stake(amountToStakeAcc2)
+
+                await ichor.includeInFee(acc1.address)
+                await ichor.includeInFee(acc2.address)
+
+                expect(await ichor.getTotalFee()).to.be.equal(40)
+                await ichor.setTotalFee(100)
+                expect(await ichor.getTotalFee()).to.be.equal(100)
+
+                let amount = 1000000000;
+                await ichor.connect(acc1).transfer(acc2.address, amount)
+
+                let expectedFeeAmount = (amount * 10) /100
+                let expectedAmountToStaking = ((expectedFeeAmount * 50 / 100) * 85) / 100
+                let acc1PartOfTotalStaked = amountToStakeAcc1 * 100 / (amountToStakeAcc1 + amountToStakeAcc2)
+                let expectedAmountToAcc1 = expectedAmountToStaking * acc1PartOfTotalStaked / 100
+                let expectedAmountToAcc2 = expectedAmountToStaking - expectedAmountToAcc1
+
+                await increaseTime(1000)
+                
+                expect(await staking.earned(acc1.address)).to.be.equal(expectedAmountToAcc1)
+                expect(await staking.earned(acc2.address)).to.be.equal(expectedAmountToAcc2)
+            });
+
             it("Sould let stake, earn and getRewards", async () => {
                 await settings()
 

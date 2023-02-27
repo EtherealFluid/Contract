@@ -12,4 +12,6 @@ interface IUnicornToken {
     function burn(address from) external;
 
     function init(address user) external;
+
+    function transferOwnership(address newOwner) external;
 }

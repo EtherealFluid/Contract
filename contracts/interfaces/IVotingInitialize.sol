@@ -4,7 +4,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 interface IVotingInitialize {
     enum VotingVariants {
-        UNICORN,
+        UNICORNADDING,
+        UNICORNREMOVAL,
         CHARITY
     }
 

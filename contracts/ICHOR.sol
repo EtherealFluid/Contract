@@ -90,6 +90,11 @@ contract ICHOR is Context, IERC20, Ownable {
     // Tokens for migration will be transferred from this wallet
     address private migrationPayer;
 
+    // Total fee
+    uint256 private totalFee;
+
+    // Denominator
+    uint256 private DENOMINATOR = 1000;
 
     /// @dev Indicates that max buy amount was updated
     /// @param _maxBuyAmount New max buy amount
@@ -147,6 +152,8 @@ contract ICHOR is Context, IERC20, Ownable {
         _isExcludedFromFee[address(this)] = true;
         unicornRewards = _unicornRewards;
         emit Transfer(address(0), _msgSender(), _tTotal);
+
+        totalFee = 40;
 
         oldIchorAddress = _oldIchorAddress;
         _charity = charity;
@@ -266,6 +273,20 @@ contract ICHOR is Context, IERC20, Ownable {
         return _charity;
     }
 
+    /// @notice Sets new total fee amount in the range from 40 to 100(40 = 4%). Max - 10%
+    /// @param newFee_ New total fee amount
+    /// @dev This method can be called only by an Owner of the contract
+    function setTotalFee(uint256 newFee_) external onlyOwner {
+        require(newFee_ <= 100, "ICHOR: Fee cant be greater than 10%");
+        totalFee = newFee_;
+    }
+
+    /// @notice Returns current total fee amount
+    /// @return uint256 Current total fee amount
+    function getTotalFee() external view returns (uint256) {
+        return totalFee;
+    }
+
     /// @notice Approves tokens to spend from callet to targeted account
     /// @param spender Spender of tokens
     /// @param amount The amount of tokens that the spender can use from the caller's balance
@@ -327,7 +348,7 @@ contract ICHOR is Context, IERC20, Ownable {
             }
         }
 
-        if (_isExcludedFromFee[from] || _isExcludedFromFee[to]) {
+        if (_isExcludedFromFee[from] || _isExcludedFromFee[to] || totalFee == 0) {
             takeFee = false;
         }
 
@@ -495,11 +516,11 @@ contract ICHOR is Context, IERC20, Ownable {
         address sender,
         uint256 amount
     ) private returns (uint256) {
-        uint256 totalFeeAmount = amount.mul(4).div(100);
-        uint256 amountToCharity = totalFeeAmount.mul(50).div(100);
+        uint256 totalFeeAmount = amount.mul(totalFee).div(DENOMINATOR);
+        uint256 amountToCharity = totalFeeAmount.mul(500).div(DENOMINATOR);
         uint256 amountToStaking = (totalFeeAmount.sub(amountToCharity))
-            .mul(85)
-            .div(100);
+            .mul(850)
+            .div(DENOMINATOR);
         uint256 amountToUnicorns = totalFeeAmount.sub(
             amountToCharity.add(amountToStaking)
         );

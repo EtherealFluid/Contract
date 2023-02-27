@@ -13,7 +13,10 @@ const { ACC_PRIVATE_KEY } = process.env;
 
 
 async function main() {
-    const StakingTx = await ethers.getContractFactory("StakingContract");
+        //charity start address: 0xde21F729137C5Af1b01d73aF1dC21eFfa2B8a0d6
+        //Ichor deployer address for all ownership: 0x660D5035Ce4F1F50537bAA612bEb35855cD80F16
+
+        const StakingTx = await ethers.getContractFactory("StakingContract");
         staking = await StakingTx.deploy("2592000");
 
         const VotingFactoryTx = await ethers.getContractFactory("VotingFactory");
@@ -30,13 +33,13 @@ async function main() {
 
         const mockTX = await ethers.getContractFactory("mockERC20");
         const oldIchorAddress = await mockTX.deploy();
-        const charity = "0xa842a38CD758f8dE8537C5CBcB2006DB0250eC7C"
-        const migrationPayer = "0xa842a38CD758f8dE8537C5CBcB2006DB0250eC7C"
+        const charity = "0xde21F729137C5Af1b01d73aF1dC21eFfa2B8a0d6"
+        const migrationPayer = "0x660D5035Ce4F1F50537bAA612bEb35855cD80F16"
 
         const ICHORTx = await ethers.getContractFactory("ICHOR");
         ichor = await ICHORTx.deploy(uniswapV2Router, oldIchorAddress.address, charity, vFactory.address, staking.address, unicornRewards.address, migrationPayer);
 
-        const name = "SactificeToken";
+        const name = "SacrificeToken";
         const symbol = "ST";
         const SacrificeTokenTx = await ethers.getContractFactory("SacrificeToken");
         sacrifice = await SacrificeTokenTx.deploy(name, symbol, staking.address);
@@ -55,9 +58,9 @@ async function main() {
         await unicornRewards.setIchorAddress(ichor.address);
         await unicornRewards.setUnicornToken(unicornToken.address);
 
-        let owner = "0xa842a38CD758f8dE8537C5CBcB2006DB0250eC7C"
+        //let owner = "0xa842a38CD758f8dE8537C5CBcB2006DB0250eC7C"
         //UnicornToken
-        await unicornToken.init(owner);
+        await unicornToken.init("0x660D5035Ce4F1F50537bAA612bEb35855cD80F16");
 
 
         const signer = new ethers.Wallet(ACC_PRIVATE_KEY, ethers.provider);

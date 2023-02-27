@@ -90,7 +90,7 @@ describe("ICHOR", () => {
 
             it("Sould create Voting", async () => {
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
-                let votingType = 1
+                let votingType = 2
                 let desctiption = keccak256(toUtf8Bytes("Description"));
                 let duration = 518400
                 let amountOfVoters = 100
@@ -273,11 +273,68 @@ describe("ICHOR", () => {
                 expect(await unicornToken.getIsUnicorn(acc3.address)).to.be.true
             });
 
+            it("Sould finish voting and resolve (UnicornRemoval)", async () => {
+                await settings()
+                let votingType = 0
+                let desctiption = keccak256(toUtf8Bytes("Description"));
+                let duration = 518400
+                let amountOfVoters = 4
+                let percantage = 50
+                let applicant = acc3.address
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
+                let receipt = await transactionReceipt.wait()
+
+                let votingInstance = receipt.events[0].args.instanceAddress.toString()
+               
+                let voting = await ethers.getContractAt("IVoting", votingInstance)
+
+                await ichor.connect(acc2).approve(voting.address, "1000")
+                await ichor.connect(acc1).approve(voting.address, "1000")
+                await voting.connect(acc2).voteFor("1000")
+                await voting.connect(acc1).voteAgainst("600")
+                
+                await increaseTime(518400)
+                await voting.finishVoting()
+
+                expect(await unicornToken.getIsUnicorn(acc3.address)).to.be.true
+                expect(await unicornToken.getUnicornsLength()).to.be.equal(2)
+                //Removal
+
+                votingType = 1
+                desctiption = keccak256(toUtf8Bytes("Description"));
+                duration = 518400
+                amountOfVoters = 4
+                percantage = 50
+                applicant = acc3.address
+                transactionReceipt = await vFactory.connect(acc3).createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
+                receipt = await transactionReceipt.wait()
+
+                votingInstance = receipt.events[0].args.instanceAddress.toString()
+               
+                voting = await ethers.getContractAt("IVoting", votingInstance)
+
+                await ichor.connect(acc2).approve(voting.address, "1000")
+                await ichor.connect(acc1).approve(voting.address, "1000")
+                await voting.connect(acc2).voteFor("1000")
+                await voting.connect(acc1).voteAgainst("600")
+                
+                await increaseTime(518400)
+                await voting.finishVoting()
+
+                expect(await ichor.balanceOf(acc3.address)).to.be.equal(0)
+                await unicornRewards.connect(acc3).getReward()
+                expect(await ichor.balanceOf(acc3.address)).to.be.equal(2)
+                expect(await unicornToken.getIsUnicorn(acc3.address)).to.be.false
+                expect(await unicornToken.getUnicornsLength()).to.be.equal(1)
+
+                await expect(vFactory.connect(acc3).createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)).to.be.revertedWith("VotingFactory: caller is not a Unicorn")
+            });
+
             it("Sould finish voting and resolve (Charity)", async () => {
                 
                 await settings()
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
-                let votingType = 1
+                let votingType = 2
                 let desctiption = keccak256(toUtf8Bytes("Description"));
                 let duration = 518400
                 let amountOfVoters = 4
@@ -324,7 +381,7 @@ describe("ICHOR", () => {
                 
                 await settings()
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
-                let votingType = 1
+                let votingType = 2
                 let desctiption = keccak256(toUtf8Bytes("Description"));
                 let duration = 518400
                 let amountOfVoters = 100
@@ -374,7 +431,7 @@ describe("ICHOR", () => {
                 
                 await settings()
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
-                let votingType = 1
+                let votingType = 2
                 let desctiption = keccak256(toUtf8Bytes("Description"));
                 let duration = 518400
                 let amountOfVoters = 4
@@ -428,7 +485,7 @@ describe("ICHOR", () => {
                 
                 await settings()
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
-                let votingType = 1
+                let votingType = 2
                 let desctiption = keccak256(toUtf8Bytes("Description"));
                 let duration = 518400
                 let amountOfVoters = 4
@@ -478,7 +535,7 @@ describe("ICHOR", () => {
                 
                 await settings()
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
-                let votingType = 1
+                let votingType = 2
                 let desctiption = keccak256(toUtf8Bytes("Description"));
                 let duration = 518400
                 let amountOfVoters = 4
@@ -544,7 +601,7 @@ describe("ICHOR", () => {
             it("Should revert createVoting with VotingFactory: caller is not a Unicorn", async () => {
                 await settings()
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(0)
-                let votingType = 1
+                let votingType = 2
                 let desctiption = keccak256(toUtf8Bytes("Description"));
                 let duration = 518400
                 let amountOfVoters = 4

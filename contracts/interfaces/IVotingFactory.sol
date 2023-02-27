@@ -37,4 +37,5 @@ interface IVotingFactory is IVotingInitialize {
         uint256 indexed previousRate,
         uint256 indexed newRate
     );
+
 }

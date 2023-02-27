@@ -26,4 +26,6 @@ interface IStakingContract {
     function notifyRewardAmount(uint256 _amount) external;
 
     function setMinimalStakingPeriod(uint256 stakingPeriod_) external;
+
+    function transferOwnership(address newOwner) external;
 }

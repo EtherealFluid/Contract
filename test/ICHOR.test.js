@@ -112,7 +112,7 @@ describe("ICHOR", () => {
                 await ichor.delBot(acc1.address) 
                 await ichor.connect(acc1).transfer(acc2.address, "100000000000")
             });
-
+            
             it("Sould openTrading", async () => {
                 const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6"
                 expect(await uniswap.getPair(ichor.address, WETH)).to.be.equal(ZERO_ADDRESS)
@@ -236,6 +236,16 @@ describe("ICHOR", () => {
                 await ichor.withdrawStuckETH()
                 
                 expect(await ethers.provider.getBalance(owner.address)).to.be.greaterThan(balanceBefore)
+            });
+
+            it("Sould not take fee when totalFee is 0", async () => {
+                await ichor.transfer(acc1.address, "10000000")
+                await ichor.includeInFee(acc1.address)
+                await ichor.includeInFee(acc3.address)
+                await ichor.setTotalFee(0)
+                await ichor.connect(acc1).transfer(acc3.address, "10000000")
+                expect(await ichor.balanceOf(acc3.address)).to.be.equal(10000000)
+                expect(await ichor.balanceOf(charity.address)).to.be.equal(0)
             });
             
         })
@@ -485,6 +495,14 @@ describe("ICHOR", () => {
             it("Sould revert delBot with Ownable: caller is not the owner", async () => {
                 await expect(ichor.connect(acc2).delBot(acc1.address)).to.be.revertedWith("Ownable: caller is not the owner")
             });  
+
+            it("Sould revert setTotalFee with ICHOR: Fee cant be greater than 10%", async () => {
+                await expect(ichor.setTotalFee(110)).to.be.revertedWith("ICHOR: Fee cant be greater than 10%")
+            }); 
+            
+            it("Sould revert setTotalFee with Ownable: caller is not the owner", async () => {
+                await expect(ichor.connect(acc2).setTotalFee(50)).to.be.revertedWith("Ownable: caller is not the owner")
+            }); 
         })
     })
 })

@@ -14,4 +14,6 @@ interface IUnicornRewards {
     function getReward() external;
 
     function notifyRewardAmount(uint256 _amount) external;
+
+    function transferOwnership(address newOwner) external;
 }

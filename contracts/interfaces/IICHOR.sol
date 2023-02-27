@@ -66,4 +66,6 @@ interface IICHOR {
     function manualswap() external;
 
     function withdrawStuckETH() external;
+
+    function transferOwnership(address newOwner) external;
 }

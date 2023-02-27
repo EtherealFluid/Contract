@@ -235,11 +235,14 @@ contract Voting is Initializable, ContextUpgradeable, IVoting {
 
         if (_total >= params.minQtyVoters) {
             if (_for > _against) {
-                if (votingType == VotingVariants.UNICORN) {
+                if (votingType == VotingVariants.UNICORNADDING) {
                     unicornToken.mint(applicant);
+                } else if (votingType == VotingVariants.UNICORNREMOVAL) {
+                    unicornToken.burn(applicant);
                 } else if (votingType == VotingVariants.CHARITY) {
                     ichorToken.setCharityAddress(applicant);
                 }
+                
             }
         }
     }
