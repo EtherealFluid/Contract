@@ -11,14 +11,14 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: `https://endpoints.omniatech.io/v1/eth/goerli/public`,
+        url: `https://goerli.blockpi.network/v1/rpc/public`,
       },
       initialBaseFeePerGas: 0,
       gasPrice: 1,
     },
 
     testnet: {
-      url: "https://endpoints.omniatech.io/v1/eth/goerli/public",
+      url: "https://eth-goerli.public.blastapi.io",
       accounts: [ACC_PRIVATE_KEY],
       gas: 2100000,
       gasPrice: 8000000000,

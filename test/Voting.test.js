@@ -106,6 +106,9 @@ describe("ICHOR", () => {
                
                 expect(await vFactory.getVotingInstancesLength()).to.be.equal(1)
                 expect(await vFactory.isVotingInstance(votingInstance)).to.be.true
+                let voting = await ethers.getContractAt("IVoting", votingInstance)
+                console.log(await voting.getVotingParams())
+                
             });
         })
 

@@ -45,6 +45,16 @@ contract StakingContract is Ownable {
     /// @notice Mapping (address => uint256). Shows time when stake ends for user
     mapping(address => uint256) public timeStakeEnds;
 
+    /// @notice Indicates that user is staked
+    /// @param user Address of user
+    /// @param amount Amount of tokens staked
+    event Staked(address user, uint256 amount);
+
+    /// @notice Indicates that user is unstaked
+    /// @param user Address of user
+    /// @param amount Amount of tokens unstaked
+    event Unstaked(address user, uint256 amount);
+
     /// @param stakingPeriod_ Staking period
     constructor(uint256 stakingPeriod_) {
         stakingPeriod = stakingPeriod_;
@@ -156,6 +166,7 @@ contract StakingContract is Ownable {
         isStaked[msg.sender] = true;
         timeStakeEnds[msg.sender] = block.timestamp + stakingPeriod;
         sacrificeToken.mint(msg.sender, _amount);
+        emit Staked(msg.sender, _amount);
     }
 
     /// @notice Unstakes ICHOR tokens to caller
@@ -183,6 +194,7 @@ contract StakingContract is Ownable {
             this.notifyRewardAmount(amountToTransfer - amountWithFee);
         }
         ichorToken.transfer(msg.sender, amountToUnstake);
+        emit Unstaked(msg.sender, amountToUnstake);
     }
 
     /// @notice Returns amount of earned tokens

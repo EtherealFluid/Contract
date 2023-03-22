@@ -19,23 +19,7 @@ interface IVotingFactory is IVotingInitialize {
 
     event CreateVoting(
         address indexed instanceAddress,
-        VotingVariants indexed instanceType
+        VotingVariants indexed instanceType,
+        Params params
     );
-    event SetMasterVoting(
-        address indexed previousContract,
-        address indexed newContract
-    );
-    event SetMasterVotingAllowList(
-        address indexed previousContract,
-        address indexed newContract
-    );
-    event SetVotingTokenRate(
-        uint256 indexed previousRate,
-        uint256 indexed newRate
-    );
-    event SetCreateProposalRate(
-        uint256 indexed previousRate,
-        uint256 indexed newRate
-    );
-
 }

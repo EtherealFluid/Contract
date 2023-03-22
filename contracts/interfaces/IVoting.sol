@@ -31,5 +31,7 @@ interface IVoting is IVotingInitialize {
 
     function getVotingResults() external;
 
+    function getVotingParams() external view returns (Params memory);
+
     function withdraw() external;
 }

@@ -147,6 +147,12 @@ contract Voting is Initializable, ContextUpgradeable, IVoting {
         return voters.length;
     }
 
+    /// @notice Returns voting description
+    /// @return bytes voting description
+    function getVotingParams() external view returns (Params memory) {
+        return params;
+    }
+
     /// @notice Returns voting balance of user
     /// @param account_ Voter's address
     /// @return amount Voting balance of user

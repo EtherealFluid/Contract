@@ -102,17 +102,19 @@ contract VotingFactory is Ownable, IVotingFactory {
             "VotingFactory: Percentage must be greater than zero"
         );
 
-        address instance;
-        instance = Clones.clone(masterVoting);
-        IVoting(instance).initialize(
-            IVotingInitialize.Params({
+        Params memory params = IVotingInitialize.Params({
                 description: _voteDescription,
                 start: block.timestamp,
                 qtyVoters: _qtyVoters,
                 minPercentageVoters: _minPercentageVoters,
                 minQtyVoters: _mulDiv(_minPercentageVoters, _qtyVoters, 100),
                 duration: _duration
-            }),
+            });
+
+        address instance;
+        instance = Clones.clone(masterVoting);
+        IVoting(instance).initialize(
+            params,
             _applicant,
             address(ichorToken),
             address(unicornToken),
@@ -125,7 +127,7 @@ contract VotingFactory is Ownable, IVotingFactory {
             })
         );
         mVotingInstances[instance] = true;
-        emit CreateVoting(instance, _typeVoting);
+        emit CreateVoting(instance, _typeVoting, params);
     }
 
     /// @notice Returns total amount of Voting instances
