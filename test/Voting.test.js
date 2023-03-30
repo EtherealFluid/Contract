@@ -25,8 +25,11 @@ describe("ICHOR", () => {
         const StakingTx = await ethers.getContractFactory("StakingContract");
         staking = await StakingTx.deploy("100");
 
+        const VoterTx = await ethers.getContractFactory("Voter");
+        voter = await VoterTx.deploy();
+
         const VotingFactoryTx = await ethers.getContractFactory("VotingFactory");
-        vFactory = await VotingFactoryTx.deploy();
+        vFactory = await VotingFactoryTx.deploy(voter.address);
 
         const UnicornRewardsx = await ethers.getContractFactory("UnicornRewards");
         unicornRewards = await UnicornRewardsx.deploy();
@@ -132,7 +135,7 @@ describe("ICHOR", () => {
 
                 let voting = await ethers.getContractAt("IVoting", votingInstance)
                 await ichor.approve(voting.address, "1000")
-                await voting.voteFor("1000")
+                await voter.voteFor(voting.address, "1000")
 
                 expect(await ichor.balanceOf(voting.address)).to.be.equal("960")
                 let result = await voting.getStats()
@@ -174,7 +177,7 @@ describe("ICHOR", () => {
 
                 let voting = await ethers.getContractAt("IVoting", votingInstance)
                 await ichor.approve(voting.address, "1000")
-                await voting.voteAgainst("1000")
+                await voter.voteAgainst(voting.address, "1000")
 
                 expect(await ichor.balanceOf(voting.address)).to.be.equal("960")
                 let result = await voting.getStats()
@@ -215,8 +218,8 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address) //TODO автоматизировать в коде!!, или берем комиссию?
                 await ichor.connect(acc2).approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc2).voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.connect(acc2).voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
                 
                 
 
@@ -256,8 +259,8 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.connect(acc2).approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc2).voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.connect(acc2).voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
                 
                 expect(await ichor.balanceOf(voting.address)).to.be.equal("1536")
                 let result = await voting.getStats()
@@ -293,8 +296,8 @@ describe("ICHOR", () => {
 
                 await ichor.connect(acc2).approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc2).voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.connect(acc2).voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
                 
                 await increaseTime(518400)
                 await voting.finishVoting()
@@ -318,8 +321,8 @@ describe("ICHOR", () => {
 
                 await ichor.connect(acc2).approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc2).voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.connect(acc2).voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
                 
                 await increaseTime(518400)
                 await voting.finishVoting()
@@ -355,8 +358,8 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.connect(acc2).approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc2).voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.connect(acc2).voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
                 
                 expect(await ichor.balanceOf(voting.address)).to.be.equal("1536")
                 let result = await voting.getStats()
@@ -374,10 +377,10 @@ describe("ICHOR", () => {
 
                 expect(await ichor.getCharityAddress()).to.be.equal(acc3.address)
 
-                let resultTransactionReceipt = await voting.getVotingResults()
+                let resultTransactionReceipt = await voter.getVotingResults(voting.address)
                 const resultReceipt = await resultTransactionReceipt.wait()
                 let resultStats = resultReceipt.events[0].topics[0]
-                expect(resultStats).to.be.equal(keccak256(toUtf8Bytes("VotingSuccessful(uint256,uint256,uint256)")))
+                expect(resultStats).to.be.equal(keccak256(toUtf8Bytes("VotingSuccessful(address,uint256,uint256,uint256)")))
             });
 
             it("Sould finish voting and do not resolve", async () => {
@@ -402,8 +405,8 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.connect(acc2).approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc2).voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.connect(acc2).voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
                 
                 expect(await ichor.balanceOf(voting.address)).to.be.equal("1536")
                 let result = await voting.getStats()
@@ -421,11 +424,11 @@ describe("ICHOR", () => {
 
                 
 
-                let resultTransactionReceipt = await voting.getVotingResults()
+                let resultTransactionReceipt = await voter.getVotingResults(voting.address)
                 const resultReceipt = await resultTransactionReceipt.wait()
                 let resultStats = resultReceipt.events[0].topics[0]
 
-                expect(resultStats).to.be.equal(keccak256(toUtf8Bytes("VotingFailed(uint256,uint256,uint256)")))
+                expect(resultStats).to.be.equal(keccak256(toUtf8Bytes("VotingFailed(address,uint256,uint256,uint256)")))
 
                 expect(await ichor.getCharityAddress()).to.be.equal(charity.address)
             });
@@ -452,8 +455,8 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.connect(acc2).approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc2).voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.connect(acc2).voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
                 
                 expect(await ichor.balanceOf(voting.address)).to.be.equal("1536")
                 let result = await voting.getStats()
@@ -465,7 +468,7 @@ describe("ICHOR", () => {
                 expect(await voting.getbalanceVoted(acc1.address)).to.be.equal("576")
 
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc1).voteAgainst("500")
+                await voter.connect(acc1).voteAgainst(voting.address, "500")
 
                 result = await voting.getStats()
                 expect(result[0]).to.be.equal("960")
@@ -506,8 +509,8 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.connect(acc2).approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc2).voteAgainst("1000")
-                await voting.connect(acc1).voteFor("600")
+                await voter.connect(acc2).voteAgainst(voting.address, "1000")
+                await voter.connect(acc1).voteFor(voting.address, "600")
                 
                 expect(await ichor.balanceOf(voting.address)).to.be.equal("1536")
                 let result = await voting.getStats()
@@ -519,7 +522,7 @@ describe("ICHOR", () => {
                 expect(await voting.getbalanceVoted(acc1.address)).to.be.equal("576")
 
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc1).voteFor("500")
+                await voter.connect(acc1).voteFor(voting.address, "500")
 
                 result = await voting.getStats()
                 expect(result[0]).to.be.equal("1056")
@@ -556,8 +559,8 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.connect(acc2).approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc2).voteAgainst("1000")
-                await voting.connect(acc1).voteFor("600")
+                await voter.connect(acc2).voteAgainst(voting.address, "1000")
+                await voter.connect(acc1).voteFor(voting.address, "600")
                 
                 expect(await ichor.balanceOf(voting.address)).to.be.equal("1536")
                 let result = await voting.getStats()
@@ -569,7 +572,7 @@ describe("ICHOR", () => {
                 expect(await voting.getbalanceVoted(acc1.address)).to.be.equal("576")
 
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.connect(acc1).voteFor("500")
+                await voter.connect(acc1).voteFor(voting.address, "500")
 
                 result = await voting.getStats()
                 expect(result[0]).to.be.equal("1056")
@@ -643,8 +646,8 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
 
                 expect(await unicornToken.getIsUnicorn(acc3.address)).to.be.false
 
@@ -670,7 +673,7 @@ describe("ICHOR", () => {
 
                 let voting = await ethers.getContractAt("IVoting", votingInstance)
 
-                await expect(voting.connect(acc4).voteFor(100)).to.be.revertedWith("Voting: Not enough ICHOR tokens!")
+                await expect(voter.connect(acc4).voteFor(voting.address, 100)).to.be.revertedWith("Voting: Not enough ICHOR tokens!")
             });
 
             it("Should revert finishVoting with Voting: Not enough ICHOR tokens!", async () => {
@@ -688,7 +691,7 @@ describe("ICHOR", () => {
 
                 let voting = await ethers.getContractAt("IVoting", votingInstance)
 
-                await expect(voting.connect(acc4).voteAgainst(100)).to.be.revertedWith("Voting: Not enough ICHOR tokens!")
+                await expect(voter.connect(acc4).voteAgainst(voting.address, 100)).to.be.revertedWith("Voting: Not enough ICHOR tokens!")
             });
 
             it("Should revert finishVoting with Voting: Voting is not over!", async () => {
@@ -708,8 +711,8 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
 
                 await expect(voting.finishVoting()).to.be.revertedWith("Voting: Voting is not over!")
             });
@@ -731,10 +734,10 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
 
-                await expect(voting.getVotingResults()).to.be.revertedWith("Voting: Voting is not over!")
+                await expect(voter.getVotingResults(voting.address)).to.be.revertedWith("Voting: Voting is not over!")
             });
 
             it("Should revert withdraw with Voting: Voting is not over!", async () => {
@@ -754,8 +757,8 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
 
                 await expect(voting.withdraw()).to.be.revertedWith("Voting: Voting is not over!")
             });
@@ -777,13 +780,13 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
 
                 await increaseTime(518400)
                 await voting.finishVoting()
 
-                await expect(voting.voteFor(100)).to.be.revertedWith("Voting: Voting is over")
+                await expect(voter.voteFor(voting.address, 100)).to.be.revertedWith("Voting: Voting is over")
             });
 
             it("Should revert voteAgainst with Voting: Voting is over", async () => {
@@ -803,13 +806,13 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
 
                 await increaseTime(518400)
                 await voting.finishVoting()
 
-                await expect(voting.voteAgainst(100)).to.be.revertedWith("Voting: Voting is over")
+                await expect(voter.voteAgainst(voting.address, 100)).to.be.revertedWith("Voting: Voting is over")
             });
 
             it("Should revert voteFor when already voted against with Voting: you cant vote for two options!", async () => {
@@ -829,10 +832,10 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
 
-                await expect(voting.connect(acc1).voteFor(100)).to.be.revertedWith("Voting: you cant vote for two options!")
+                await expect(voter.connect(acc1).voteFor(voting.address, 100)).to.be.revertedWith("Voting: you cant vote for two options!")
             });
 
             it("Should revert voteAgainst when already voted against with Voting: you cant vote for two options!", async () => {
@@ -852,10 +855,10 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.voteFor("1000")
-                await voting.connect(acc1).voteFor("600")
+                await voter.voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteFor(voting.address, "600")
 
-                await expect(voting.connect(acc1).voteAgainst(100)).to.be.revertedWith("Voting: you cant vote for two options!")
+                await expect(voter.connect(acc1).voteAgainst(voting.address, 100)).to.be.revertedWith("Voting: you cant vote for two options!")
             });
             
 
@@ -876,8 +879,8 @@ describe("ICHOR", () => {
                 //await ichor.excludeFromFee(voting.address)
                 await ichor.approve(voting.address, "1000")
                 await ichor.connect(acc1).approve(voting.address, "1000")
-                await voting.voteFor("1000")
-                await voting.connect(acc1).voteAgainst("600")
+                await voter.voteFor(voting.address, "1000")
+                await voter.connect(acc1).voteAgainst(voting.address, "600")
 
                 await increaseTime(518400)
 
@@ -906,7 +909,7 @@ describe("ICHOR", () => {
                     duration: duration
                 }
                 let voting = await ethers.getContractAt("IVoting", votingInstance)
-                await expect(voting.initialize(Params, applicant, ichor.address, unicornToken.address, 0)).to.be.revertedWith("Initializable: contract is already initialized")
+                await expect(voting.initialize(Params, applicant, ichor.address, unicornToken.address, voter.address, 0)).to.be.revertedWith("Initializable: contract is already initialized")
             });
 
             it("Should revert createVoting with VotingFactory: Duration exceeds the allowable interval", async () => {

@@ -31,6 +31,8 @@ contract VotingFactory is Ownable, IVotingFactory {
     /// @notice Uicorn token instance
     IUnicornToken public unicornToken;
 
+    address private voterContractAddress;
+
     /// @notice Mapping (address => bool). Shows if address is Voting instance
     mapping(address => bool) private mVotingInstances;
 
@@ -43,8 +45,9 @@ contract VotingFactory is Ownable, IVotingFactory {
         _;
     }
 
-    constructor() {
+    constructor(address _voterContractAddress) {
         masterVoting = address(new Voting());
+        voterContractAddress = _voterContractAddress;
     }
 
     /// @notice Sets new ICHOR token address
@@ -118,6 +121,7 @@ contract VotingFactory is Ownable, IVotingFactory {
             _applicant,
             address(ichorToken),
             address(unicornToken),
+            voterContractAddress,
             _typeVoting
         );
         votingInstances.push(

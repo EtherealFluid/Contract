@@ -9,6 +9,8 @@ const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 const { format } = require("prettier");
 require('dotenv').config()
+var {keccak256} = require("@ethersproject/keccak256");
+var {toUtf8Bytes} = require("@ethersproject/strings");
 const { ACC_PRIVATE_KEY } = process.env;
 
 
@@ -64,6 +66,29 @@ async function main() {
         const unicornToken = await ethers.getContractAt("UnicornToken", "0x6e2F266b48e0206AdD560c40584B225aBE5137B3");
         const ichor = await ethers.getContractAt("ICHOR", "0x76939411024612B2856B1B97F741AeDE5BDc4E65");
 
+        /* let votingType = 1
+                let desctiption = keccak256(toUtf8Bytes("Description"));
+                let duration = 518400
+                let amountOfVoters = 4
+                let percantage = 50
+                let applicant = "0xa94880A86c8c1bc8e5ee5F661c427E8B329b679a"
+                let transactionReceipt = await vFactory.createVoting(votingType, desctiption, duration, amountOfVoters, percantage, applicant)
+                
+                const receipt = await transactionReceipt.wait()
+                //console.log(receipt.logs)
+                //console.log(receipt.events[0].args.instanceAddress.toString())
+
+                let votingInstance = receipt.events[0].args.instanceAddress.toString()
+              
+                let voting = await ethers.getContractAt("IVoting", votingInstance)
+                console.log("inst", voting.address) */
+
+                let votingInstance = "0x06dE39cC4DA58Ad9a3e7B7015d913BF372ac7C6F"
+              
+                let voter = await ethers.getContractAt("Voter", votingInstance)
+                await voter.voteAgainst("0xF139fD0272A277B5bF0e61998584cfdd39066590", "1000")
+
+
 /*         //Staking
         await staking.setIchorAddress(ichor.address);
         await staking.setSacrificeToken(sacrifice.address);
@@ -81,14 +106,14 @@ async function main() {
         //await unicornToken.init("0xa94880A86c8c1bc8e5ee5F661c427E8B329b679a");
 
 
-        const signer = new ethers.Wallet(ACC_PRIVATE_KEY, ethers.provider);
+/*         const signer = new ethers.Wallet(ACC_PRIVATE_KEY, ethers.provider);
         await signer.sendTransaction({
           to: ichor.address,
           value: BigNumber.from("100000"),
         });
         
         await ichor.transfer(ichor.address, "500000")
-        await ichor.openTrading()    
+        await ichor.openTrading()   */  
 }
 
 main().catch((error) => {

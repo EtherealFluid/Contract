@@ -9,6 +9,7 @@ interface IVoting is IVotingInitialize {
         address _applicant,
         address _ichorTokenAddress,
         address _unicornToken,
+        address _voterContractAddress,
         VotingVariants votingType
     ) external;
 
@@ -23,13 +24,13 @@ interface IVoting is IVotingInitialize {
         view
         returns (uint256 _for, uint256 _against, uint256 _count);
 
-    function voteFor(uint256 amount_) external;
+    function voteFor(address user, uint256 amount_) external;
 
-    function voteAgainst(uint256 amount_) external;
+    function voteAgainst(address user, uint256 amount_) external;
 
     function finishVoting() external;
 
-    function getVotingResults() external;
+    //function getVotingResults() external;
 
     function getVotingParams() external view returns (Params memory);
 

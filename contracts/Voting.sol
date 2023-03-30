@@ -58,23 +58,7 @@ contract Voting is Initializable, ContextUpgradeable, IVoting {
     /// @notice Voting type
     VotingVariants private votingType;
 
-    /// @notice Indicates that user is voted
-    /// @param voter Address of voter
-    /// @param choice Choice of  voter (True - For, False - Against)
-    /// @param amount_ Amount of ICHOR tokens locked
-    event Voted(address voter, bool choice, uint256 amount_);
-
-    /// @notice Indicates that voting was successfull
-    /// @param _for Total amount of votes For
-    /// @param _against Total amount of votes Against
-    /// @param _total Total amount of voters
-    event VotingSuccessful(uint256 _for, uint256 _against, uint256 _total);
-
-    /// @notice Indicates that voting was Failed
-    /// @param _for Total amount of votes For
-    /// @param _against Total amount of votes Against
-    /// @param _total Total amount of voters
-    event VotingFailed(uint256 _for, uint256 _against, uint256 _total);
+    address private voterContractAddress;
 
     /// @notice Checks if voting result has been completed
     modifier votingResultNotCompleted() {
@@ -82,10 +66,16 @@ contract Voting is Initializable, ContextUpgradeable, IVoting {
         _;
     }
 
+    /// @notice Checks if caller is a Voter contract
+    modifier onlyVoter() {
+        require(_msgSender() == voterContractAddress, "Voting: Caller is not a Voter contract!");
+        _;
+    }
+
     /// @notice Checks if caller is a ICHOR token holder
-    modifier tokenHoldersOnly() {
+    modifier tokenHoldersOnly(address _user) {
         require(
-            ichorToken.balanceOf(_msgSender()) > 0,
+            ichorToken.balanceOf(_user) > 0,
             "Voting: Not enough ICHOR tokens!"
         );
         _;
@@ -121,6 +111,7 @@ contract Voting is Initializable, ContextUpgradeable, IVoting {
         address _applicant,
         address _ichorTokenAddress,
         address _unicornToken,
+        address _voterContractAddress,
         VotingVariants _votingType
     ) public virtual override initializer {
         params = _params;
@@ -128,6 +119,7 @@ contract Voting is Initializable, ContextUpgradeable, IVoting {
         resultCompleted = false;
         applicant = _applicant;
         unicornToken = IUnicornToken(_unicornToken);
+        voterContractAddress = _voterContractAddress;
         votingType = _votingType;
     }
 
@@ -183,24 +175,24 @@ contract Voting is Initializable, ContextUpgradeable, IVoting {
     This method can be called only while voting is active.
     **/
     function voteFor(
+        address user,
         uint256 amount_
-    ) public virtual tokenHoldersOnly votingIsActive {
+    ) public virtual onlyVoter tokenHoldersOnly(user) votingIsActive {
         require(
-            balancesAgainst[_msgSender()] == 0,
+            balancesAgainst[user] == 0,
             "Voting: you cant vote for two options!"
         );
-        ichorToken.transferFrom(_msgSender(), address(this), amount_);
+        ichorToken.transferFrom(user, address(this), amount_);
 
-        if (balancesFor[_msgSender()] == 0) {
-            voters.push(ballot({voterAddress: _msgSender(), choice: true}));
+        if (balancesFor[user] == 0) {
+            voters.push(ballot({voterAddress: user, choice: true}));
         }
 
         uint256 amountWithFee = amount_ - ((amount_ * 4) / 100);
 
-        balancesFor[_msgSender()] += amountWithFee;
+        balancesFor[user] += amountWithFee;
         totalAmountFor += amountWithFee;
         totalForVotes++;
-        emit Voted(_msgSender(), true, amountWithFee);
     }
 
     /// @notice Votes Against
@@ -210,24 +202,23 @@ contract Voting is Initializable, ContextUpgradeable, IVoting {
     This method can be called only while voting is active.
     **/
     function voteAgainst(
+        address user,
         uint256 amount_
-    ) public virtual tokenHoldersOnly votingIsActive {
+    ) public virtual onlyVoter tokenHoldersOnly(user) votingIsActive {
         require(
-            balancesFor[_msgSender()] == 0,
+            balancesFor[user] == 0,
             "Voting: you cant vote for two options!"
         );
-        ichorToken.transferFrom(_msgSender(), address(this), amount_);
+        ichorToken.transferFrom(user, address(this), amount_);
 
-        if (balancesAgainst[_msgSender()] == 0) {
-            voters.push(ballot({voterAddress: _msgSender(), choice: false}));
+        if (balancesAgainst[user] == 0) {
+            voters.push(ballot({voterAddress: user, choice: false}));
         }
         uint256 amountWithFee = amount_ - ((amount_ * 4) / 100);
 
-        balancesAgainst[_msgSender()] += amountWithFee;
+        balancesAgainst[user] += amountWithFee;
         totalAmountAgainst += amountWithFee;
         totalAgainstVotes++;
-
-        emit Voted(_msgSender(), false, amountWithFee);
     }
 
     /// @notice Completes and finishes Voting
@@ -250,19 +241,6 @@ contract Voting is Initializable, ContextUpgradeable, IVoting {
                 }
                 
             }
-        }
-    }
-
-    /// @notice Returns voting results (by event)
-    /**
-    @dev This method can be called only when voting is over.
-    **/
-    function getVotingResults() external votingIsOver {
-        (uint256 _for, uint256 _against, uint256 _total) = getStats();
-        if (_total >= params.minQtyVoters) {
-            emit VotingSuccessful(_for, _against, _total);
-        } else {
-            emit VotingFailed(_for, _against, _total);
         }
     }
 

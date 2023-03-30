@@ -1,4 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-truffle5");
 require('dotenv').config()
 const { ACC_PRIVATE_KEY, ETHERSCAN_API_KEY } = process.env;
@@ -18,11 +19,9 @@ module.exports = {
     },
 
     testnet: {
-      url: "https://eth-goerli.public.blastapi.io",
+      url: "https://data-seed-prebsc-2-s2.binance.org:8545",
       accounts: [ACC_PRIVATE_KEY],
-      gas: 2100000,
-      gasPrice: 8000000000,
-  },
+    },
   },
 
   etherscan: {

@@ -22,8 +22,11 @@ describe("SacrificeToken", () => {
         const StakingTx = await ethers.getContractFactory("StakingContract");
         staking = await StakingTx.deploy("100");
 
+        const VoterTx = await ethers.getContractFactory("Voter");
+        voter = await VoterTx.deploy();
+
         const VotingFactoryTx = await ethers.getContractFactory("VotingFactory");
-        vFactory = await VotingFactoryTx.deploy();
+        vFactory = await VotingFactoryTx.deploy(voter.address);
 
         const UnicornRewardsx = await ethers.getContractFactory("UnicornRewards");
         unicornRewards = await UnicornRewardsx.deploy();
