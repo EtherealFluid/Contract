@@ -66,7 +66,7 @@ async function main() {
         const unicornToken = await ethers.getContractAt("UnicornToken", "0x6e2F266b48e0206AdD560c40584B225aBE5137B3");
         const ichor = await ethers.getContractAt("ICHOR", "0x76939411024612B2856B1B97F741AeDE5BDc4E65");
 
-        /* let votingType = 1
+       /*  let votingType = 2
                 let desctiption = keccak256(toUtf8Bytes("Description"));
                 let duration = 518400
                 let amountOfVoters = 4
@@ -83,10 +83,12 @@ async function main() {
                 let voting = await ethers.getContractAt("IVoting", votingInstance)
                 console.log("inst", voting.address) */
 
-                let votingInstance = "0x06dE39cC4DA58Ad9a3e7B7015d913BF372ac7C6F"
+/*                 let votingInstance = "0x06dE39cC4DA58Ad9a3e7B7015d913BF372ac7C6F"
               
                 let voter = await ethers.getContractAt("Voter", votingInstance)
-                await voter.voteAgainst("0xF139fD0272A277B5bF0e61998584cfdd39066590", "1000")
+                await voter.voteFor("0x2336F4989414FCfC126BD71BEf81c08DCfFB027c", "1000") */
+
+               await staking.unstake()
 
 
 /*         //Staking

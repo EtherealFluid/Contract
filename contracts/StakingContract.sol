@@ -48,7 +48,7 @@ contract StakingContract is Ownable {
     /// @notice Indicates that user is staked
     /// @param user Address of user
     /// @param amount Amount of tokens staked
-    event Staked(address user, uint256 amount);
+    event Staked(address user, uint256 amount, uint256 timeStakeEnds);
 
     /// @notice Indicates that user is unstaked
     /// @param user Address of user
@@ -166,7 +166,7 @@ contract StakingContract is Ownable {
         isStaked[msg.sender] = true;
         timeStakeEnds[msg.sender] = block.timestamp + stakingPeriod;
         sacrificeToken.mint(msg.sender, _amount);
-        emit Staked(msg.sender, _amount);
+        emit Staked(msg.sender, _amount, timeStakeEnds[msg.sender]);
     }
 
     /// @notice Unstakes ICHOR tokens to caller

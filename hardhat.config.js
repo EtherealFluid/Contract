@@ -2,6 +2,7 @@ require("@nomicfoundation/hardhat-toolbox");
 require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-truffle5");
 require('dotenv').config()
+require('hardhat-docgen');
 const { ACC_PRIVATE_KEY, ETHERSCAN_API_KEY } = process.env;
 
 
@@ -27,4 +28,10 @@ module.exports = {
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
+
+  docgen: {
+    path: './docs',
+    clear: true,
+    runOnCompile: true,
+  }
 };
